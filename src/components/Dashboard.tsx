@@ -20,7 +20,9 @@ import {
   Logout as LogoutIcon,
   Assignment as AssignmentIcon,
   CheckCircle as CheckCircleIcon,
-  Schedule as ScheduleIcon
+  Schedule as ScheduleIcon,
+  Download as DownloadIcon,
+  Edit as EditIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { format, addDays } from 'date-fns';
@@ -96,7 +98,22 @@ const Dashboard: React.FC = () => {
 
   const handleFormularioClick = (formulario: Formulario) => {
     if (formulario.completado) {
-              toast('Este formulario ya está completado', { icon: 'ℹ️' });
+      toast('Este formulario ya está completado', { icon: 'ℹ️' });
+      return;
+    }
+    navigate(`/formulario/${formulario.id}`);
+  };
+
+  const handleDownloadExcel = (formulario: Formulario, event: React.MouseEvent) => {
+    event.stopPropagation();
+    toast.success(`Descargando Excel del formulario: ${formulario.nombre}`);
+    // Aquí iría la lógica real de descarga
+  };
+
+  const handleEditFormulario = (formulario: Formulario, event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (formulario.completado) {
+      toast.error('El administrador debe dar permiso para editar este formulario completado');
       return;
     }
     navigate(`/formulario/${formulario.id}`);
@@ -194,7 +211,7 @@ const Dashboard: React.FC = () => {
                   </Box>
                 </CardContent>
 
-                <CardActions>
+                <CardActions sx={{ flexDirection: 'column', gap: 1 }}>
                   <Button 
                     size="small" 
                     variant="outlined"
@@ -204,6 +221,30 @@ const Dashboard: React.FC = () => {
                   >
                     {formulario.completado ? 'Ver Detalles' : 'Completar Formulario'}
                   </Button>
+                  
+                  <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      startIcon={<DownloadIcon />}
+                      onClick={(e) => handleDownloadExcel(formulario, e)}
+                      sx={{ flex: 1 }}
+                      disabled={!formulario.completado}
+                    >
+                      Excel
+                    </Button>
+                    
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="secondary"
+                      startIcon={<EditIcon />}
+                      onClick={(e) => handleEditFormulario(formulario, e)}
+                      sx={{ flex: 1 }}
+                    >
+                      Editar
+                    </Button>
+                  </Box>
                 </CardActions>
               </Card>
             </Grid>

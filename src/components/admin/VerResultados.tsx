@@ -39,7 +39,8 @@ import {
   FilterList as FilterIcon,
   Assessment as AssessmentIcon,
   TableChart as TableChartIcon,
-  Visibility as VisibilityIcon
+  Visibility as VisibilityIcon,
+  Notifications as NotificationsIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -157,6 +158,11 @@ const VerResultados: React.FC = () => {
       toast.success('Descargando consolidado en Excel...');
     }
     // Aquí iría la lógica real de descarga
+  };
+
+  const handleEnviarNotificacion = (resultado: FormularioResultado) => {
+    toast.success(`Enviando notificación de comentarios para ${resultado.formulario} - ${resultado.banco}`);
+    // Aquí iría la lógica real de envío de notificación
   };
 
   const handleVisualizarFormulario = (resultado: FormularioResultado) => {
@@ -359,6 +365,17 @@ const VerResultados: React.FC = () => {
                         >
                           Descargar
                         </Button>
+                        {resultado.estado === 'completado' && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<NotificationsIcon />}
+                            onClick={() => handleEnviarNotificacion(resultado)}
+                            color="warning"
+                          >
+                            Notificar
+                          </Button>
+                        )}
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -511,8 +528,25 @@ const VerResultados: React.FC = () => {
           maxWidth="xl"
           fullWidth
         >
-          <DialogTitle>
-            Visualizar Formulario: {formularioSeleccionado?.formulario}
+          <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6">
+              Visualizar Formulario: {formularioSeleccionado?.formulario}
+            </Typography>
+            {formularioSeleccionado?.estado === 'completado' && (
+              <Button
+                variant="outlined"
+                startIcon={<NotificationsIcon />}
+                onClick={() => {
+                  if (formularioSeleccionado) {
+                    handleEnviarNotificacion(formularioSeleccionado);
+                  }
+                }}
+                color="warning"
+                size="small"
+              >
+                Enviar Notificación de Comentarios
+              </Button>
+            )}
           </DialogTitle>
           <DialogContent>
             {formularioSeleccionado && (

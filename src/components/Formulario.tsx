@@ -40,13 +40,23 @@ import {
   Visibility as VisibilityIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import FormEditModal from './FormEditModal';
 import toast from 'react-hot-toast';
 
 interface Columna {
   nombre: string;
-  tipo: 'texto' | 'numero' | 'fecha' | 'decimal';
+  tipo: 'texto' | 'numero' | 'fecha' | 'decimal' | 'genero';
   requerido: boolean;
   editable: boolean;
+}
+
+interface FormField {
+  name: string;
+  label: string;
+  type: 'text' | 'number' | 'select' | 'date';
+  options?: string[];
+  required?: boolean;
+  editable?: boolean;
 }
 
 interface Fila {
@@ -69,32 +79,52 @@ const Formulario: React.FC = () => {
       // Solo mantenemos NEG. IC como ejemplo
       setNombreFormulario('Negociación Internacional y Comercio');
       setColumnas([
-        { nombre: 'Código', tipo: 'texto', requerido: true, editable: false },
-        { nombre: 'Descripción', tipo: 'texto', requerido: true, editable: false },
-        { nombre: 'Valor 1', tipo: 'numero', requerido: false, editable: true },
-        { nombre: 'Valor 2', tipo: 'numero', requerido: false, editable: true },
-        { nombre: 'Valor 3', tipo: 'numero', requerido: false, editable: true },
-        { nombre: 'Valor 4', tipo: 'numero', requerido: false, editable: true },
-        { nombre: 'Valor 5', tipo: 'numero', requerido: false, editable: true },
-        { nombre: 'Valor 6', tipo: 'numero', requerido: false, editable: true },
-        { nombre: 'Valor 7', tipo: 'numero', requerido: false, editable: true },
-        { nombre: 'Valor 8', tipo: 'numero', requerido: false, editable: true },
-        { nombre: 'Estado', tipo: 'texto', requerido: true, editable: true },
-        { nombre: 'Acción', tipo: 'texto', requerido: false, editable: false }
+        { nombre: 'COD. CARGO', tipo: 'texto', requerido: true, editable: false },
+        { nombre: 'NOMBRE GENÉRICO DEL CARGO', tipo: 'texto', requerido: true, editable: false },
+        { nombre: 'NIVEL DEL CARGO (HAY, MERCER O GGS)', tipo: 'texto', requerido: false, editable: true },
+        { nombre: '$ BONO ANUAL PAGADO EL 2025 POR EL DESEMPEÑO DEL 2024', tipo: 'numero', requerido: false, editable: true },
+        { nombre: 'INCENTIVOS TRIMESTRALES/ MENSUALES PAGADOS EL 2024', tipo: 'numero', requerido: false, editable: true },
+        { nombre: '$ TOTAL COMISIONES PAGADAS EL 2024', tipo: 'numero', requerido: false, editable: true },
+        { nombre: 'FECHA DE NACIMIENTO (dd/mm/aaaa)', tipo: 'fecha', requerido: false, editable: true },
+        { nombre: 'GÉNERO (Masculino ó Femenino)', tipo: 'genero', requerido: false, editable: true }
       ]);
       setFilas([
-        { id: '1', datos: { 'Código': 'W-01', 'Descripción': 'GERENTE BANCA MAYORISTA', 'Valor 1': '1836552', 'Valor 2': '2.722493', 'Valor 3': '5000000', 'Valor 4': '', 'Valor 5': '89458948', 'Valor 6': '89458948', 'Valor 7': '89458948', 'Valor 8': '89458948', 'Estado': 'Listo', 'Acción': 'Agregar registro a la categoría' } },
-        { id: '2', datos: { 'Código': 'F-00', 'Descripción': 'GERENTE DIVISIÓN TESORERÍA / GERENTE DIVISIÓN MERCADO DE CAPITALES', 'Valor 1': '', 'Valor 2': '', 'Valor 3': '', 'Valor 4': '', 'Valor 5': '0', 'Valor 6': '0', 'Valor 7': '', 'Valor 8': '', 'Estado': 'Listo', 'Acción': 'Agregar registro a la categoría' } },
-        { id: '3', datos: { 'Código': 'F-01', 'Descripción': 'GERENTE ÁREA DISTRIBUCIÓN (SALES)', 'Valor 1': '', 'Valor 2': '', 'Valor 3': '', 'Valor 4': '', 'Valor 5': '', 'Valor 6': '', 'Valor 7': '', 'Valor 8': '', 'Estado': 'EDITAR', 'Acción': 'Agregar registro a la categoría' } }
+        { 
+          id: '1', 
+          datos: { 
+            'COD. CARGO': 'W-01', 
+            'NOMBRE GENÉRICO DEL CARGO': 'GERENTE BANCA MAYORISTA', 
+            'NIVEL DEL CARGO (HAY, MERCER O GGS)': '', 
+            '$ BONO ANUAL PAGADO EL 2025 POR EL DESEMPEÑO DEL 2024': '', 
+            'INCENTIVOS TRIMESTRALES/ MENSUALES PAGADOS EL 2024': '', 
+            '$ TOTAL COMISIONES PAGADAS EL 2024': '', 
+            'FECHA DE NACIMIENTO (dd/mm/aaaa)': '', 
+            'GÉNERO (Masculino ó Femenino)': '' 
+          } 
+        },
+        { 
+          id: '2', 
+          datos: { 
+            'COD. CARGO': 'F-00', 
+            'NOMBRE GENÉRICO DEL CARGO': 'GERENTE DIVISIÓN TESORERÍA / GERENTE DIVISIÓN MERCADO DE CAPITALES', 
+            'NIVEL DEL CARGO (HAY, MERCER O GGS)': '', 
+            '$ BONO ANUAL PAGADO EL 2025 POR EL DESEMPEÑO DEL 2024': '', 
+            'INCENTIVOS TRIMESTRALES/ MENSUALES PAGADOS EL 2024': '', 
+            '$ TOTAL COMISIONES PAGADAS EL 2024': '', 
+            'FECHA DE NACIMIENTO (dd/mm/aaaa)': '', 
+            'GÉNERO (Masculino ó Femenino)': '' 
+          } 
+        }
       ]);
     };
 
     configurarFormulario();
   }, [id]);
 
-  const [editando, setEditando] = useState<string | null>(null);
   const [modalCategorias, setModalCategorias] = useState(false);
   const [modalEnviar, setModalEnviar] = useState(false);
+  const [modalEdit, setModalEdit] = useState(false);
+  const [filaEditando, setFilaEditando] = useState<Fila | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' }>({
     open: false,
     message: '',
@@ -102,7 +132,11 @@ const Formulario: React.FC = () => {
   });
 
   const handleEdit = (filaId: string) => {
-    setEditando(filaId);
+    const fila = filas.find(f => f.id === filaId);
+    if (fila) {
+      setFilaEditando(fila);
+      setModalEdit(true);
+    }
   };
 
   const handleAdd = (filaId: string) => {
@@ -122,23 +156,42 @@ const Formulario: React.FC = () => {
   };
 
   const handleSave = () => {
-    setEditando(null);
     toast.success('Progreso guardado exitosamente');
   };
 
-  const handleInputChange = (filaId: string, columna: string, valor: string) => {
-    setFilas(prev => prev.map(fila => {
-      if (fila.id === filaId) {
-        return {
-          ...fila,
-          datos: {
-            ...fila.datos,
-            [columna]: valor
-          }
-        };
+  const handleModalSave = (data: any) => {
+    if (filaEditando) {
+      setFilas(prev => prev.map(fila => 
+        fila.id === filaEditando.id 
+          ? { ...fila, datos: data }
+          : fila
+      ));
+      toast.success('Registro actualizado exitosamente');
+    }
+  };
+
+  const getFormFields = (): FormField[] => {
+    return columnas.map(col => {
+      let field: FormField = {
+        name: col.nombre,
+        label: col.nombre,
+        type: 'text',
+        required: col.requerido,
+        editable: col.editable
+      };
+
+      if (col.tipo === 'numero') {
+        field.type = 'select';
+        field.options = ['NA', '0'];
+      } else if (col.tipo === 'genero') {
+        field.type = 'select';
+        field.options = ['Masculino', 'Femenino'];
+      } else if (col.tipo === 'fecha') {
+        field.type = 'date';
       }
-      return fila;
-    }));
+
+      return field;
+    });
   };
 
   const handleEnviar = () => {
@@ -190,66 +243,18 @@ const Formulario: React.FC = () => {
     return true;
   };
 
-  const renderInput = (fila: Fila, columna: Columna) => {
-    if (!columna.editable) {
-      return (
-        <TextField
-          value={fila.datos[columna.nombre] || ''}
-          disabled
-          fullWidth
-          size="small"
-          variant="outlined"
-        />
-      );
-    }
-
-    if (editando === fila.id) {
-      if (columna.tipo === 'numero' || columna.tipo === 'decimal') {
-        return (
-          <FormControl fullWidth size="small">
-            <InputLabel>Valor</InputLabel>
-            <Select
-              value={fila.datos[columna.nombre] || ''}
-              onChange={(e) => handleInputChange(fila.id, columna.nombre, e.target.value as string)}
-              onBlur={() => validarValor(fila.datos[columna.nombre] as string, columna.tipo)}
-            >
-              <MenuItem value="">Seleccionar</MenuItem>
-              <MenuItem value="NA">NA</MenuItem>
-              <MenuItem value="0">0</MenuItem>
-            </Select>
-          </FormControl>
-        );
-      }
-
-      return (
-        <TextField
-          value={fila.datos[columna.nombre] || ''}
-          onChange={(e) => handleInputChange(fila.id, columna.nombre, e.target.value as string)}
-          fullWidth
-          size="small"
-          variant="outlined"
-          type={columna.tipo === 'fecha' ? 'date' : 'text'}
-          className={
-            columna.requerido && !fila.datos[columna.nombre] 
-              ? 'campo-requerido' 
-              : fila.datos[columna.nombre] 
-                ? 'campo-success' 
-                : ''
-          }
-        />
-      );
-    }
-
+  const renderCellContent = (fila: Fila, columna: Columna) => {
+    const valor = fila.datos[columna.nombre] || '-';
+    
     return (
       <Typography 
         variant="body2" 
-        className={
-          columna.requerido && !fila.datos[columna.nombre] 
-            ? 'campo-requerido' 
-            : ''
-        }
+        sx={{ 
+          color: columna.requerido && !fila.datos[columna.nombre] ? 'error.main' : 'inherit',
+          fontWeight: columna.requerido && !fila.datos[columna.nombre] ? 'bold' : 'normal'
+        }}
       >
-        {fila.datos[columna.nombre] || '-'}
+        {valor}
       </Typography>
     );
   };
@@ -324,40 +329,27 @@ const Formulario: React.FC = () => {
                   <TableRow key={fila.id}>
                     {columnas.map((columna) => (
                       <TableCell key={columna.nombre}>
-                        {renderInput(fila, columna)}
+                        {renderCellContent(fila, columna)}
                       </TableCell>
                     ))}
                     <TableCell>
                       <div className="action-buttons">
-                        {editando === fila.id ? (
-                          <Button
+                        <Tooltip title="Editar">
+                          <IconButton
                             size="small"
-                            variant="contained"
-                            startIcon={<SaveIcon />}
-                            onClick={handleSave}
+                            onClick={() => handleEdit(fila.id)}
                           >
-                            Guardar
-                          </Button>
-                        ) : (
-                          <>
-                            <Tooltip title="Editar">
-                              <IconButton
-                                size="small"
-                                onClick={() => handleEdit(fila.id)}
-                              >
-                                <EditIcon />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Agregar registro similar">
-                              <IconButton
-                                size="small"
-                                onClick={() => handleAdd(fila.id)}
-                              >
-                                <AddIcon />
-                              </IconButton>
-                            </Tooltip>
-                          </>
-                        )}
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Agregar registro similar">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleAdd(fila.id)}
+                          >
+                            <AddIcon />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -470,6 +462,19 @@ const Formulario: React.FC = () => {
             {snackbar.message}
           </Alert>
         </Snackbar>
+
+        {/* Modal de Edición */}
+        <FormEditModal
+          open={modalEdit}
+          onClose={() => {
+            setModalEdit(false);
+            setFilaEditando(null);
+          }}
+          onSave={handleModalSave}
+          rowData={filaEditando?.datos}
+          fields={getFormFields()}
+          title={`Editar Registro: ${filaEditando?.datos['COD. CARGO'] || ''}`}
+        />
       </Container>
     </Box>
   );
