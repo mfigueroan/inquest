@@ -53,22 +53,41 @@ const FormEditModal: React.FC<FormEditModalProps> = ({
   }, [rowData]);
 
   const handleInputChange = (fieldName: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: value
-    }));
+    let processedValue = value;
+    
+    // Auto-calculate TOTAL COMISIONES if this is one of the calculation fields
+    if (fieldName === '$ BONO ANUAL PAGADO EL 2025 POR EL DESEMPEÑO DEL 2024' || 
+        fieldName === 'INCENTIVOS TRIMESTRALES/ MENSUALES PAGADOS EL 2024') {
+      
+      const updatedData = { ...formData, [fieldName]: value };
+      const bonoAnual = parseFloat(updatedData['$ BONO ANUAL PAGADO EL 2025 POR EL DESEMPEÑO DEL 2024']) || 0;
+      const incentivos = parseFloat(updatedData['INCENTIVOS TRIMESTRALES/ MENSUALES PAGADOS EL 2024']) || 0;
+      
+      if (bonoAnual > 0 && incentivos > 0) {
+        updatedData['$ TOTAL COMISIONES PAGADAS EL 2024'] = (bonoAnual * incentivos).toString();
+      } else {
+        updatedData['$ TOTAL COMISIONES PAGADAS EL 2024'] = 'NA';
+      }
+      
+      setFormData(updatedData);
+    } else {
+      setFormData((prev: any) => ({
+        ...prev,
+        [fieldName]: processedValue
+      }));
+    }
 
     // Clear error when user starts typing
     if (errors[fieldName]) {
-      setErrors(prev => ({
+      setErrors((prev: { [key: string]: string }) => ({
         ...prev,
         [fieldName]: ''
       }));
     }
 
     // Show warning for 0 values in numeric fields
-    if (value === '0' && fields.find(f => f.name === fieldName)?.type === 'number') {
-      setErrors(prev => ({
+    if (value === '0' && (fieldName.includes('BONO') || fieldName.includes('INCENTIVOS'))) {
+      setErrors((prev: { [key: string]: string }) => ({
         ...prev,
         [fieldName]: 'El ingreso de 0 puede afectar negativamente los resultados, si desconoce el valor seleccione NA'
       }));
@@ -109,6 +128,30 @@ const FormEditModal: React.FC<FormEditModalProps> = ({
     }
 
     if (field.type === 'select') {
+      // Special handling for number input fields
+      if (field.name === '$ BONO ANUAL PAGADO EL 2025 POR EL DESEMPEÑO DEL 2024' || 
+          field.name === 'INCENTIVOS TRIMESTRALES/ MENSUALES PAGADOS EL 2024') {
+        return (
+          <TextField
+            fullWidth
+            label={field.label}
+            value={formData[field.name] || ''}
+            onChange={(e) => {
+              const value = e.target.value;
+              // Allow only numbers, NA, or empty
+              if (value === '' || value === 'NA' || /^\d+$/.test(value)) {
+                handleInputChange(field.name, value);
+              }
+            }}
+            type="text"
+            variant="outlined"
+            error={!!errors[field.name]}
+            helperText={errors[field.name] || 'Ingrese un número o "NA"'}
+            placeholder="Ingrese un número o NA"
+          />
+        );
+      }
+      
       return (
         <FormControl fullWidth error={!!errors[field.name]}>
           <InputLabel>{field.label}</InputLabel>

@@ -212,16 +212,6 @@ const Dashboard: React.FC = () => {
                 </CardContent>
 
                 <CardActions sx={{ flexDirection: 'column', gap: 1 }}>
-                  <Button 
-                    size="small" 
-                    variant="outlined"
-                    color="inherit"
-                    fullWidth
-                    disabled={formulario.completado}
-                  >
-                    {formulario.completado ? 'Ver Detalles' : 'Completar Formulario'}
-                  </Button>
-                  
                   <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
                     <Button
                       size="small"

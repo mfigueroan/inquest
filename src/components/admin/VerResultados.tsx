@@ -365,17 +365,6 @@ const VerResultados: React.FC = () => {
                         >
                           Descargar
                         </Button>
-                        {resultado.estado === 'completado' && (
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            startIcon={<NotificationsIcon />}
-                            onClick={() => handleEnviarNotificacion(resultado)}
-                            color="warning"
-                          >
-                            Notificar
-                          </Button>
-                        )}
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -532,21 +521,6 @@ const VerResultados: React.FC = () => {
             <Typography variant="h6">
               Visualizar Formulario: {formularioSeleccionado?.formulario}
             </Typography>
-            {formularioSeleccionado?.estado === 'completado' && (
-              <Button
-                variant="outlined"
-                startIcon={<NotificationsIcon />}
-                onClick={() => {
-                  if (formularioSeleccionado) {
-                    handleEnviarNotificacion(formularioSeleccionado);
-                  }
-                }}
-                color="warning"
-                size="small"
-              >
-                Enviar Notificación de Comentarios
-              </Button>
-            )}
           </DialogTitle>
           <DialogContent>
             {formularioSeleccionado && (

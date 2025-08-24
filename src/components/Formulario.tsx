@@ -82,9 +82,9 @@ const Formulario: React.FC = () => {
         { nombre: 'COD. CARGO', tipo: 'texto', requerido: true, editable: false },
         { nombre: 'NOMBRE GENÉRICO DEL CARGO', tipo: 'texto', requerido: true, editable: false },
         { nombre: 'NIVEL DEL CARGO (HAY, MERCER O GGS)', tipo: 'texto', requerido: false, editable: true },
-        { nombre: '$ BONO ANUAL PAGADO EL 2025 POR EL DESEMPEÑO DEL 2024', tipo: 'numero', requerido: false, editable: true },
-        { nombre: 'INCENTIVOS TRIMESTRALES/ MENSUALES PAGADOS EL 2024', tipo: 'numero', requerido: false, editable: true },
-        { nombre: '$ TOTAL COMISIONES PAGADAS EL 2024', tipo: 'numero', requerido: false, editable: true },
+        { nombre: '$ BONO ANUAL PAGADO EL 2025 POR EL DESEMPEÑO DEL 2024', tipo: 'numero', requerido: true, editable: true },
+        { nombre: 'INCENTIVOS TRIMESTRALES/ MENSUALES PAGADOS EL 2024', tipo: 'numero', requerido: true, editable: true },
+        { nombre: '$ TOTAL COMISIONES PAGADAS EL 2024', tipo: 'numero', requerido: false, editable: false },
         { nombre: 'FECHA DE NACIMIENTO (dd/mm/aaaa)', tipo: 'fecha', requerido: false, editable: true },
         { nombre: 'GÉNERO (Masculino ó Femenino)', tipo: 'genero', requerido: false, editable: true }
       ]);
@@ -161,6 +161,16 @@ const Formulario: React.FC = () => {
 
   const handleModalSave = (data: any) => {
     if (filaEditando) {
+      // Calculate TOTAL COMISIONES if both required fields are filled
+      const bonoAnual = parseFloat(data['$ BONO ANUAL PAGADO EL 2025 POR EL DESEMPEÑO DEL 2024']) || 0;
+      const incentivos = parseFloat(data['INCENTIVOS TRIMESTRALES/ MENSUALES PAGADOS EL 2024']) || 0;
+      
+      if (bonoAnual > 0 && incentivos > 0) {
+        data['$ TOTAL COMISIONES PAGADAS EL 2024'] = (bonoAnual * incentivos).toString();
+      } else {
+        data['$ TOTAL COMISIONES PAGADAS EL 2024'] = 'NA';
+      }
+      
       setFilas(prev => prev.map(fila => 
         fila.id === filaEditando.id 
           ? { ...fila, datos: data }
@@ -181,8 +191,17 @@ const Formulario: React.FC = () => {
       };
 
       if (col.tipo === 'numero') {
-        field.type = 'select';
-        field.options = ['NA', '0'];
+        // Special handling for calculation fields vs input fields
+        if (col.nombre === '$ BONO ANUAL PAGADO EL 2025 POR EL DESEMPEÑO DEL 2024' || 
+            col.nombre === 'INCENTIVOS TRIMESTRALES/ MENSUALES PAGADOS EL 2024') {
+          field.type = 'select'; // Will be handled as number input in FormEditModal
+          field.options = ['NA', '0'];
+        } else if (col.nombre === '$ TOTAL COMISIONES PAGADAS EL 2024') {
+          field.type = 'text'; // Read-only calculated field
+        } else {
+          field.type = 'select';
+          field.options = ['NA', '0'];
+        }
       } else if (col.tipo === 'genero') {
         field.type = 'select';
         field.options = ['Masculino', 'Femenino'];
@@ -286,8 +305,11 @@ const Formulario: React.FC = () => {
             <Typography variant="body1" sx={{ mb: 1 }}>
               2. SE ENTIENDE POR RBM A TODA LA RENTA ANUAL GARANTIZADA MENSUALIZADA (A MAYO 2025, INCLUYE GRATIFICACIONES Y TODOS LOS BONOS Y AGUINALDOS GARANTIZADOS (DE FIESTAS PATRIAS, NAVIDAD, VACACIONES Y OTROS) NO INCLUIR ASIGNACIÓN DE COLACIÓN NI DE MOVILIZACIÓN.
             </Typography>
-            <Typography variant="body1">
+            <Typography variant="body1" sx={{ mb: 1 }}>
               3. ANOTAR EL NIVEL HAY, MERCER O GGS DEL CARGO SI UTILIZA ESTAS METODOLOGÍAS DE EVALUACIÓN DE CARGOS
+            </Typography>
+            <Typography variant="body1" sx={{ color: 'error.main', fontWeight: 'bold' }}>
+              4. El ingreso de 0 puede afectar negativamente los resultados, si desconoce el valor seleccione NA.
             </Typography>
           </Box>
         </Paper>
