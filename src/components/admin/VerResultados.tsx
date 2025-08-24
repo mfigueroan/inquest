@@ -664,6 +664,19 @@ const VerResultados: React.FC = () => {
              </Button>
              <Button 
                variant="contained"
+               color="error"
+               startIcon={<NotificationsIcon />}
+               onClick={() => {
+                 if (formularioSeleccionado) {
+                   handleEnviarNotificacion(formularioSeleccionado);
+                 }
+               }}
+               disabled={formularioSeleccionado?.estado !== 'completado'}
+             >
+               Enviar Comentarios
+             </Button>
+             <Button 
+               variant="contained"
                startIcon={<DownloadIcon />}
                onClick={() => {
                  handleDescargarExcel('individual', formularioSeleccionado?.id);

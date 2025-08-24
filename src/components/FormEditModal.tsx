@@ -98,7 +98,7 @@ const FormEditModal: React.FC<FormEditModalProps> = ({
     const newErrors: { [key: string]: string } = {};
     
     fields.forEach(field => {
-      if (field.required && field.editable && (!formData[field.name] || formData[field.name] === '')) {
+      if (field.editable && (!formData[field.name] || formData[field.name] === '')) {
         newErrors[field.name] = `${field.label} es requerido`;
       }
     });
@@ -138,16 +138,15 @@ const FormEditModal: React.FC<FormEditModalProps> = ({
             value={formData[field.name] || ''}
             onChange={(e) => {
               const value = e.target.value;
-              // Allow only numbers, NA, or empty
-              if (value === '' || value === 'NA' || /^\d+$/.test(value)) {
+              // Allow NA, 0, numbers, or empty
+              if (value === '' || value === 'NA' || value === '0' || /^\d+$/.test(value)) {
                 handleInputChange(field.name, value);
               }
             }}
-            type="text"
             variant="outlined"
             error={!!errors[field.name]}
-            helperText={errors[field.name] || 'Ingrese un número o "NA"'}
-            placeholder="Ingrese un número o NA"
+            helperText={errors[field.name] || 'Escriba un número, "NA" o "0"'}
+            placeholder="Escriba un número, NA o 0"
           />
         );
       }
@@ -167,6 +166,11 @@ const FormEditModal: React.FC<FormEditModalProps> = ({
               </MenuItem>
             ))}
           </Select>
+          {errors[field.name] && (
+            <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
+              {errors[field.name]}
+            </Typography>
+          )}
         </FormControl>
       );
     }
