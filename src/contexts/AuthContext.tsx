@@ -60,14 +60,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         {
           id: '1',
           username: 'banco1',
-          bankName: 'Banco de Chile',
+          bankName: 'Banco Santander',
           role: 'bank',
           isActive: true
         },
         {
           id: '2',
           username: 'banco2',
-          bankName: 'Banco Santander',
+          bankName: 'Banco de Chile',
           role: 'bank',
           isActive: true
         },

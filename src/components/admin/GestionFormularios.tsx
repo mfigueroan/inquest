@@ -85,19 +85,6 @@ const GestionFormularios: React.FC = () => {
       ]
     },
     {
-      id: '2',
-      nombre: 'Negociación Internacional y Comercio',
-      descripcion: 'Formulario para cargos de negociación internacional y comercio',
-      fechaCreacion: '2024-02-01',
-      fechaLimite: '2024-11-30',
-      activo: true,
-      asignaciones: [
-        { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true },
-        { bancoId: '2', bancoNombre: 'Banco Santander', activo: true },
-        { bancoId: '3', bancoNombre: 'Banco Estado', activo: true }
-      ]
-    },
-    {
       id: '3',
       nombre: 'BP Wealth Management',
       descripcion: 'Formulario específico para BP Wealth Management',
@@ -138,6 +125,21 @@ const GestionFormularios: React.FC = () => {
     }
   ]);
 
+  // Formulario oculto que se mostrará al cargar Excel
+  const formularioNegociacion: Formulario = {
+    id: '2',
+    nombre: 'Negociación Internacional y Comercio',
+    descripcion: 'Formulario para cargos de negociación internacional y comercio',
+    fechaCreacion: '2024-02-01',
+    fechaLimite: '2024-11-30',
+    activo: true,
+    asignaciones: [
+      { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true },
+      { bancoId: '2', bancoNombre: 'Banco Santander', activo: true },
+      { bancoId: '3', bancoNombre: 'Banco Estado', activo: true }
+    ]
+  };
+
   const [modalNuevoFormulario, setModalNuevoFormulario] = useState(false);
   const [modalCargarExcel, setModalCargarExcel] = useState(false);
   const [modalAsignaciones, setModalAsignaciones] = useState(false);
@@ -151,6 +153,7 @@ const GestionFormularios: React.FC = () => {
   });
 
   const [archivoExcel, setArchivoExcel] = useState<File | null>(null);
+  const [formularioRecienAgregado, setFormularioRecienAgregado] = useState<string | null>(null);
 
   const handleToggleFormulario = (formularioId: string) => {
     setFormularios(prev => prev.map(f => 
@@ -210,8 +213,23 @@ const GestionFormularios: React.FC = () => {
       return;
     }
 
-    // Aquí iría la lógica real de carga del Excel
-    toast.success('Archivo Excel cargado exitosamente');
+    // Simular la carga del formulario de Negociación Internacional
+    const formularioExiste = formularios.some(f => f.id === '2');
+    if (!formularioExiste) {
+      setFormularios(prev => {
+        // Insertar el formulario en la posición correcta (después del primero)
+        const nuevaLista = [...prev];
+        nuevaLista.splice(1, 0, formularioNegociacion);
+        return nuevaLista;
+      });
+      setFormularioRecienAgregado('2');
+      // Quitar el highlight después de 3 segundos
+      setTimeout(() => setFormularioRecienAgregado(null), 3000);
+      toast.success('Formulario "Negociación Internacional y Comercio" cargado exitosamente desde Excel');
+    } else {
+      toast('El formulario ya existe en el sistema', { icon: 'ℹ️' });
+    }
+    
     setModalCargarExcel(false);
     setArchivoExcel(null);
   };
@@ -329,7 +347,13 @@ const GestionFormularios: React.FC = () => {
         <Grid container spacing={3}>
           {formularios.map((formulario) => (
             <Grid item xs={12} md={6} key={formulario.id}>
-              <Card>
+              <Card
+                sx={{
+                  backgroundColor: formularioRecienAgregado === formulario.id ? '#e8f5e8' : 'inherit',
+                  border: formularioRecienAgregado === formulario.id ? '2px solid #4caf50' : 'inherit',
+                  transition: 'all 0.3s ease'
+                }}
+              >
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                     <Typography variant="h6" component="h2">

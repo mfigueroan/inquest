@@ -229,6 +229,25 @@ const Formulario: React.FC = () => {
   const confirmarEnvio = () => {
     setModalEnviar(false);
     toast.success('Formulario enviado exitosamente');
+    
+    // Actualizar el estado del formulario en localStorage para simular completado
+    const formularioCompletado = {
+      id: id,
+      completado: true,
+      fechaCompletado: new Date().toISOString().split('T')[0]
+    };
+    
+    const formulariosCompletados = JSON.parse(localStorage.getItem('formularios_completados') || '[]');
+    const index = formulariosCompletados.findIndex((f: any) => f.id === id);
+    
+    if (index >= 0) {
+      formulariosCompletados[index] = formularioCompletado;
+    } else {
+      formulariosCompletados.push(formularioCompletado);
+    }
+    
+    localStorage.setItem('formularios_completados', JSON.stringify(formulariosCompletados));
+    
     navigate('/dashboard');
   };
 

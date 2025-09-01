@@ -114,13 +114,37 @@ const VerResultados: React.FC = () => {
       formulario: 'Negociación Internacional y Comercio',
       fechaCompletado: '2024-11-28',
       estado: 'completado',
-      datos: { 
-        'W-01': 'GERENTE BANCA MAYORISTA',
-        'F-00': 'GERENTE DIVISIÓN TESORERÍA / GERENTE DIVISIÓN MERCADO DE CAPITALES',
-        'F-01': 'GERENTE ÁREA DISTRIBUCIÓN (SALES)',
-        'Valor 1': '89458948',
-        'Valor 2': '89458948',
-        'Valor 3': '89458948'
+      datos: {
+        'W-00': {
+          codigo: 'W-00',
+          nombre: 'HEAD NEGOCIO FINANCIERO',
+          nivel: 'MERCER',
+          bono: '1000',
+          incentivos: '4',
+          total: '40000',
+          fechaNacimiento: '23-01-1996',
+          genero: 'masculino'
+        },
+        'W-01': {
+          codigo: 'W-01',
+          nombre: 'GERENTE BANCA MAYORISTA',
+          nivel: 'GGS',
+          bono: '2000',
+          incentivos: '4',
+          total: '80000',
+          fechaNacimiento: '23-01-1996',
+          genero: 'masculino'
+        },
+        'F-00': {
+          codigo: 'F-00',
+          nombre: 'GERENTE DIVISIÓN TESORERÍA / GERENTE DIVISIÓN MERCADO DE CAPITALES',
+          nivel: 'HAY',
+          bono: '3000',
+          incentivos: '4',
+          total: '120000',
+          fechaNacimiento: '23-01-1996',
+          genero: 'masculino'
+        }
       }
     },
     {
@@ -153,11 +177,22 @@ const VerResultados: React.FC = () => {
 
   const handleDescargarExcel = (tipo: 'individual' | 'consolidado', id?: string) => {
     if (tipo === 'individual' && id) {
-      toast.success(`Descargando formulario ${id} en Excel...`);
+      const resultado = resultados.find(r => r.id === id);
+      if (resultado?.formulario === 'Negociación Internacional y Comercio') {
+        // Descargar el archivo neg_ic.xlsx
+        const link = document.createElement('a');
+        link.href = '/neg_ic.xlsx';
+        link.download = 'neg_ic.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Descargando formulario Negociación Internacional y Comercio...');
+      } else {
+        toast.success(`Descargando formulario ${id} en Excel...`);
+      }
     } else {
       toast.success('Descargando consolidado en Excel...');
     }
-    // Aquí iría la lógica real de descarga
   };
 
   const handleEnviarNotificacion = (resultado: FormularioResultado) => {
@@ -406,37 +441,49 @@ const VerResultados: React.FC = () => {
               <TableHead>
                 <TableRow>
                   <TableCell><strong>Banco</strong></TableCell>
-                  <TableCell><strong>Código</strong></TableCell>
-                  <TableCell><strong>Descripción</strong></TableCell>
-                  <TableCell><strong>Valor 1</strong></TableCell>
-                  <TableCell><strong>Valor 2</strong></TableCell>
-                  <TableCell><strong>Valor 3</strong></TableCell>
-                  <TableCell><strong>Valor 4</strong></TableCell>
-                  <TableCell><strong>Valor 5</strong></TableCell>
-                  <TableCell><strong>Valor 6</strong></TableCell>
-                  <TableCell><strong>Valor 7</strong></TableCell>
-                  <TableCell><strong>Valor 8</strong></TableCell>
-                  <TableCell><strong>Estado</strong></TableCell>
+                  <TableCell><strong>CÓD. CARGO</strong></TableCell>
+                  <TableCell><strong>NOMBRE GENÉRICO DEL CARGO</strong></TableCell>
+                  <TableCell><strong>NIVEL DEL CARGO (HAY, MERCER O GGS)</strong></TableCell>
+                  <TableCell><strong>$ BONO ANUAL PAGADO EL 2025 POR EL DESEMPEÑO DEL 2024</strong></TableCell>
+                  <TableCell><strong>INCENTIVOS TRIMESTRALES/ MENSUALES PAGADOS EL 2024</strong></TableCell>
+                  <TableCell><strong>$ TOTAL COMISIONES PAGADAS EL 2024</strong></TableCell>
+                  <TableCell><strong>FECHA DE NACIMIENTO (dd/mm/aaaa)</strong></TableCell>
+                  <TableCell><strong>GÉNERO (Masculino ó Femenino)</strong></TableCell>
                   <TableCell><strong>Comentario</strong></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {/* Ejemplo de datos del formulario NEG. IC */}
+                {/* Datos del formulario NEG. IC de Banco Santander */}
                 <TableRow>
-                  <TableCell>Banco de Chile</TableCell>
+                  <TableCell>Banco Santander</TableCell>
+                  <TableCell>W-00</TableCell>
+                  <TableCell>HEAD NEGOCIO FINANCIERO</TableCell>
+                  <TableCell>MERCER</TableCell>
+                  <TableCell>1000</TableCell>
+                  <TableCell>4</TableCell>
+                  <TableCell>40000</TableCell>
+                  <TableCell>23-01-1996</TableCell>
+                  <TableCell>masculino</TableCell>
+                  <TableCell>
+                    <TextField
+                      size="small"
+                      placeholder="Agregar comentario..."
+                      value={comentarios['W-00'] || ''}
+                      onChange={(e) => handleComentarioChange('W-00', e.target.value)}
+                      fullWidth
+                    />
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Banco Santander</TableCell>
                   <TableCell>W-01</TableCell>
                   <TableCell>GERENTE BANCA MAYORISTA</TableCell>
-                  <TableCell>1836552</TableCell>
-                  <TableCell>2.722493</TableCell>
-                  <TableCell>5000000</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>89458948</TableCell>
-                  <TableCell>89458948</TableCell>
-                  <TableCell>89458948</TableCell>
-                  <TableCell>89458948</TableCell>
-                  <TableCell>
-                    <Chip label="Listo" color="success" size="small" />
-                  </TableCell>
+                  <TableCell>GGS</TableCell>
+                  <TableCell>2000</TableCell>
+                  <TableCell>4</TableCell>
+                  <TableCell>80000</TableCell>
+                  <TableCell>23-01-1996</TableCell>
+                  <TableCell>masculino</TableCell>
                   <TableCell>
                     <TextField
                       size="small"
@@ -451,48 +498,18 @@ const VerResultados: React.FC = () => {
                   <TableCell>Banco Santander</TableCell>
                   <TableCell>F-00</TableCell>
                   <TableCell>GERENTE DIVISIÓN TESORERÍA / GERENTE DIVISIÓN MERCADO DE CAPITALES</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>
-                    <Chip label="Listo" color="success" size="small" />
-                  </TableCell>
+                  <TableCell>HAY</TableCell>
+                  <TableCell>3000</TableCell>
+                  <TableCell>4</TableCell>
+                  <TableCell>120000</TableCell>
+                  <TableCell>23-01-1996</TableCell>
+                  <TableCell>masculino</TableCell>
                   <TableCell>
                     <TextField
                       size="small"
                       placeholder="Agregar comentario..."
                       value={comentarios['F-00'] || ''}
                       onChange={(e) => handleComentarioChange('F-00', e.target.value)}
-                      fullWidth
-                    />
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>Banco Estado</TableCell>
-                  <TableCell>F-01</TableCell>
-                  <TableCell>GERENTE ÁREA DISTRIBUCIÓN (SALES)</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>
-                    <Chip label="EDITAR" color="warning" size="small" />
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                      size="small"
-                      placeholder="Agregar comentario..."
-                      value={comentarios['F-01'] || ''}
-                      onChange={(e) => handleComentarioChange('F-01', e.target.value)}
                       fullWidth
                     />
                   </TableCell>
@@ -553,101 +570,73 @@ const VerResultados: React.FC = () => {
                   Datos del Formulario
                 </Typography>
                 
-                                 {/* Mostrar todas las columnas del formulario */}
-                 <TableContainer component={Paper}>
-                   <Table>
-                     <TableHead>
-                       <TableRow>
-                         <TableCell><strong>Código</strong></TableCell>
-                         <TableCell><strong>Descripción</strong></TableCell>
-                         <TableCell><strong>Valor 1</strong></TableCell>
-                         <TableCell><strong>Valor 2</strong></TableCell>
-                         <TableCell><strong>Valor 3</strong></TableCell>
-                         <TableCell><strong>Valor 4</strong></TableCell>
-                         <TableCell><strong>Valor 5</strong></TableCell>
-                         <TableCell><strong>Valor 6</strong></TableCell>
-                         <TableCell><strong>Valor 7</strong></TableCell>
-                         <TableCell><strong>Valor 8</strong></TableCell>
-                         <TableCell><strong>Estado</strong></TableCell>
-                         <TableCell><strong>Comentario</strong></TableCell>
-                       </TableRow>
-                     </TableHead>
-                     <TableBody>
-                       <TableRow>
-                         <TableCell>W-01</TableCell>
-                         <TableCell>GERENTE BANCA MAYORISTA</TableCell>
-                         <TableCell>1836552</TableCell>
-                         <TableCell>2.722493</TableCell>
-                         <TableCell>5000000</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>89458948</TableCell>
-                         <TableCell>89458948</TableCell>
-                         <TableCell>89458948</TableCell>
-                         <TableCell>89458948</TableCell>
-                         <TableCell>
-                           <Chip label="Listo" color="success" size="small" />
-                         </TableCell>
-                         <TableCell>
-                           <TextField
-                             size="small"
-                             placeholder="Agregar comentario..."
-                             value={comentarios['W-01'] || ''}
-                             onChange={(e) => handleComentarioChange('W-01', e.target.value)}
-                             fullWidth
-                           />
-                         </TableCell>
-                       </TableRow>
-                       <TableRow>
-                         <TableCell>F-00</TableCell>
-                         <TableCell>GERENTE DIVISIÓN TESORERÍA / GERENTE DIVISIÓN MERCADO DE CAPITALES</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>0</TableCell>
-                         <TableCell>0</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>
-                           <Chip label="Listo" color="success" size="small" />
-                         </TableCell>
-                         <TableCell>
-                           <TextField
-                             size="small"
-                             placeholder="Agregar comentario..."
-                             value={comentarios['F-00'] || ''}
-                             onChange={(e) => handleComentarioChange('F-00', e.target.value)}
-                             fullWidth
-                           />
-                         </TableCell>
-                       </TableRow>
-                       <TableRow>
-                         <TableCell>F-01</TableCell>
-                         <TableCell>GERENTE ÁREA DISTRIBUCIÓN (SALES)</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>-</TableCell>
-                         <TableCell>
-                           <Chip label="EDITAR" color="warning" size="small" />
-                         </TableCell>
-                         <TableCell>
-                           <TextField
-                             size="small"
-                             placeholder="Agregar comentario..."
-                             value={comentarios['F-01'] || ''}
-                             onChange={(e) => handleComentarioChange('F-01', e.target.value)}
-                             fullWidth
-                           />
-                         </TableCell>
-                       </TableRow>
-                     </TableBody>
-                   </Table>
-                 </TableContainer>
+                                 {/* Mostrar datos del formulario de Negociación Internacional */}
+                 {formularioSeleccionado?.formulario === 'Negociación Internacional y Comercio' ? (
+                   <TableContainer component={Paper}>
+                     <Table>
+                       <TableHead>
+                         <TableRow>
+                           <TableCell><strong>CÓD. CARGO</strong></TableCell>
+                           <TableCell><strong>NOMBRE GENÉRICO DEL CARGO</strong></TableCell>
+                           <TableCell><strong>NIVEL DEL CARGO (HAY, MERCER O GGS)</strong></TableCell>
+                           <TableCell><strong>$ BONO ANUAL PAGADO EL 2025 POR EL DESEMPEÑO DEL 2024</strong></TableCell>
+                           <TableCell><strong>INCENTIVOS TRIMESTRALES/ MENSUALES PAGADOS EL 2024</strong></TableCell>
+                           <TableCell><strong>$ TOTAL COMISIONES PAGADAS EL 2024</strong></TableCell>
+                           <TableCell><strong>FECHA DE NACIMIENTO (dd/mm/aaaa)</strong></TableCell>
+                           <TableCell><strong>GÉNERO (Masculino ó Femenino)</strong></TableCell>
+                           <TableCell><strong>Comentario</strong></TableCell>
+                         </TableRow>
+                       </TableHead>
+                       <TableBody>
+                         {Object.values(formularioSeleccionado.datos).map((fila: any, index) => (
+                           <TableRow key={index}>
+                             <TableCell>{fila.codigo}</TableCell>
+                             <TableCell>{fila.nombre}</TableCell>
+                             <TableCell>{fila.nivel}</TableCell>
+                             <TableCell>{fila.bono}</TableCell>
+                             <TableCell>{fila.incentivos}</TableCell>
+                             <TableCell>{fila.total}</TableCell>
+                             <TableCell>{fila.fechaNacimiento}</TableCell>
+                             <TableCell>{fila.genero}</TableCell>
+                             <TableCell>
+                               <TextField
+                                 size="small"
+                                 placeholder="Agregar comentario..."
+                                 value={comentarios[fila.codigo] || ''}
+                                 onChange={(e) => handleComentarioChange(fila.codigo, e.target.value)}
+                                 fullWidth
+                               />
+                             </TableCell>
+                           </TableRow>
+                         ))}
+                       </TableBody>
+                     </Table>
+                   </TableContainer>
+                 ) : (
+                   <TableContainer component={Paper}>
+                     <Table>
+                       <TableHead>
+                         <TableRow>
+                           <TableCell><strong>Código</strong></TableCell>
+                           <TableCell><strong>Descripción</strong></TableCell>
+                           <TableCell><strong>Valor 1</strong></TableCell>
+                           <TableCell><strong>Valor 2</strong></TableCell>
+                           <TableCell><strong>Valor 3</strong></TableCell>
+                           <TableCell><strong>Comentario</strong></TableCell>
+                         </TableRow>
+                       </TableHead>
+                       <TableBody>
+                         <TableRow>
+                           <TableCell colSpan={6} align="center">
+                             <Typography color="textSecondary">
+                               Datos del formulario no disponibles
+                             </Typography>
+                           </TableCell>
+                         </TableRow>
+                       </TableBody>
+                     </Table>
+                   </TableContainer>
+                 )}
               </Box>
             )}
           </DialogContent>

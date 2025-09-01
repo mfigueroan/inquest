@@ -87,7 +87,16 @@ const Dashboard: React.FC = () => {
         activo: true
       }
     ];
-    setFormularios(mockFormularios);
+
+    // Verificar formularios completados en localStorage
+    const formulariosCompletados = JSON.parse(localStorage.getItem('formularios_completados') || '[]');
+    
+    const formulariosActualizados = mockFormularios.map(formulario => {
+      const completado = formulariosCompletados.find((f: any) => f.id === formulario.id);
+      return completado ? { ...formulario, completado: true } : formulario;
+    });
+
+    setFormularios(formulariosActualizados);
   }, []);
 
   const handleLogout = () => {
