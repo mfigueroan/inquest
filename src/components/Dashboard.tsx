@@ -189,13 +189,15 @@ const Dashboard: React.FC = () => {
   };
 
   const getStatusColor = (formulario: Formulario) => {
-    if (formulario.completado) return 'success';
+    if (formulario.completado && !formulario.editableByBanco) return 'success';
+    if (formulario.completado && formulario.editableByBanco) return 'warning';
     if (new Date() > formulario.fechaLimite) return 'error';
     return 'warning';
   };
 
   const getStatusText = (formulario: Formulario) => {
-    if (formulario.completado) return 'Completado';
+    if (formulario.completado && !formulario.editableByBanco) return 'Completado';
+    if (formulario.completado && formulario.editableByBanco) return 'Pendiente';
     if (new Date() > formulario.fechaLimite) return 'Vencido';
     return 'Pendiente';
   };
@@ -235,13 +237,13 @@ const Dashboard: React.FC = () => {
           {formularios.map((formulario) => (
             <Grid item xs={12} sm={6} md={4} key={formulario.id}>
               <Card 
-                className={`formulario-card ${formulario.completado ? 'formulario-completado' : 'formulario-pendiente'}`}
+                className={`formulario-card ${(formulario.completado && !formulario.editableByBanco) ? 'formulario-completado' : 'formulario-pendiente'}`}
                 sx={{ 
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
                   position: 'relative',
-                  cursor: formulario.completado ? 'default' : 'pointer'
+                  cursor: (formulario.completado && !formulario.editableByBanco) ? 'default' : 'pointer'
                 }}
                 onClick={() => handleFormularioClick(formulario)}
               >

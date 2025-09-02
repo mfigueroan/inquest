@@ -73,6 +73,7 @@ interface Formulario {
     bancoId: string;
     bancoNombre: string;
     activo: boolean;
+    editableByBanco: boolean;
   }[];
 }
 
@@ -90,9 +91,9 @@ const GestionFormularios: React.FC = () => {
       activo: true,
       editableByBanco: false,
       asignaciones: [
-        { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true },
-        { bancoId: '2', bancoNombre: 'Banco Santander', activo: true },
-        { bancoId: '3', bancoNombre: 'Banco Estado', activo: false }
+        { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true, editableByBanco: false },
+        { bancoId: '2', bancoNombre: 'Banco Santander', activo: true, editableByBanco: false },
+        { bancoId: '3', bancoNombre: 'Banco Estado', activo: false, editableByBanco: false }
       ]
     },
     {
@@ -104,9 +105,9 @@ const GestionFormularios: React.FC = () => {
       activo: true,
       editableByBanco: false,
       asignaciones: [
-        { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true },
-        { bancoId: '2', bancoNombre: 'Banco Santander', activo: true },
-        { bancoId: '3', bancoNombre: 'Banco Estado', activo: false }
+        { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true, editableByBanco: false },
+        { bancoId: '2', bancoNombre: 'Banco Santander', activo: true, editableByBanco: false },
+        { bancoId: '3', bancoNombre: 'Banco Estado', activo: false, editableByBanco: false }
       ]
     },
     {
@@ -118,9 +119,9 @@ const GestionFormularios: React.FC = () => {
       activo: true,
       editableByBanco: false,
       asignaciones: [
-        { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true },
-        { bancoId: '2', bancoNombre: 'Banco Santander', activo: false },
-        { bancoId: '3', bancoNombre: 'Banco Estado', activo: true }
+        { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true, editableByBanco: false },
+        { bancoId: '2', bancoNombre: 'Banco Santander', activo: false, editableByBanco: false },
+        { bancoId: '3', bancoNombre: 'Banco Estado', activo: true, editableByBanco: false }
       ]
     },
     {
@@ -132,9 +133,9 @@ const GestionFormularios: React.FC = () => {
       activo: true,
       editableByBanco: false,
       asignaciones: [
-        { bancoId: '1', bancoNombre: 'Banco de Chile', activo: false },
-        { bancoId: '2', bancoNombre: 'Banco Santander', activo: true },
-        { bancoId: '3', bancoNombre: 'Banco Estado', activo: true }
+        { bancoId: '1', bancoNombre: 'Banco de Chile', activo: false, editableByBanco: false },
+        { bancoId: '2', bancoNombre: 'Banco Santander', activo: true, editableByBanco: false },
+        { bancoId: '3', bancoNombre: 'Banco Estado', activo: true, editableByBanco: false }
       ]
     }
   ]);
@@ -159,9 +160,9 @@ const GestionFormularios: React.FC = () => {
       { id: '8', nombre: 'GÉNERO (Masculino o Femenino)', tipo: 'genero', requerido: false, editable: true }
     ],
     asignaciones: [
-      { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true },
-      { bancoId: '2', bancoNombre: 'Banco Santander', activo: true },
-      { bancoId: '3', bancoNombre: 'Banco Estado', activo: true }
+      { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true, editableByBanco: false },
+      { bancoId: '2', bancoNombre: 'Banco Santander', activo: true, editableByBanco: false },
+      { bancoId: '3', bancoNombre: 'Banco Estado', activo: true, editableByBanco: false }
     ]
   };
 
@@ -218,9 +219,9 @@ const GestionFormularios: React.FC = () => {
       activo: true,
       editableByBanco: false,
       asignaciones: [
-        { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true },
-        { bancoId: '2', bancoNombre: 'Banco Santander', activo: true },
-        { bancoId: '3', bancoNombre: 'Banco Estado', activo: true }
+        { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true, editableByBanco: false },
+        { bancoId: '2', bancoNombre: 'Banco Santander', activo: true, editableByBanco: false },
+        { bancoId: '3', bancoNombre: 'Banco Estado', activo: true, editableByBanco: false }
       ]
     };
 

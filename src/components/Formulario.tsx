@@ -475,11 +475,18 @@ const Formulario: React.FC = () => {
         </Dialog>
 
         {/* Modal de Confirmación de Envío */}
-        <Dialog open={modalEnviar} onClose={() => setModalEnviar(false)}>
+        <Dialog open={modalEnviar} onClose={() => setModalEnviar(false)} maxWidth="sm" fullWidth>
           <DialogTitle>Confirmar Envío</DialogTitle>
           <DialogContent>
             <Alert severity="warning" sx={{ mb: 2 }}>
               ¿Está seguro de enviar la información? Una vez realizada la acción esta no se puede deshacer.
+            </Alert>
+            <Alert severity="info" sx={{ mt: 2 }}>
+              <Typography variant="body2">
+                <strong>Importante:</strong> El proceso de validación puede tardar entre 3 a 5 días hábiles. 
+                Le recomendamos encarecidamente estar atento a su correo durante este tiempo, 
+                para la aprobación del formulario y si se requiere información adicional.
+              </Typography>
             </Alert>
           </DialogContent>
           <DialogActions>
