@@ -1,118 +1,142 @@
-# Inquest - Aplicación Web de Gestión de Formularios Bancarios
+# 🏦 Sistema Inquest - Gestión de Formularios Bancarios
 
-## Descripción
+Aplicación web para gestión de formularios de levantamiento de cargos bancarios desarrollada con React y TypeScript.
 
-Inquest es una aplicación web moderna desarrollada en React con TypeScript que permite a los bancos gestionar y completar formularios financieros de manera eficiente. La aplicación incluye un sistema de autenticación, dashboard para usuarios bancarios, y un panel de administración completo.
+## 🌟 Características Principales
 
-## Características Principales
+- **Autenticación multi-banco** con roles diferenciados
+- **Dashboard personalizado** según tipo de usuario
+- **Gestión dinámica de formularios** con carga desde Excel
+- **Sistema de permisos granular** por banco y formulario
+- **Interfaz administrativa completa** para gestión centralizada
+- **Solicitudes de edición** con flujo de aprobación
+- **Estados visuales** con códigos de color intuitivos
 
-### Para Usuarios Bancarios
-- **Dashboard intuitivo** con tarjetas de formularios
-- **Formularios editables** con validación de campos
-- **Sistema de colores** para identificar estado (verde=completado, amarillo=pendiente)
-- **Validación de datos** con notificaciones para valores numéricos
-- **Botones de acción** por fila (editar, agregar registro similar)
-- **Guardado de progreso** y envío final con confirmación
-- **Modal de categorías** para ver estructura del formulario
-
-### Para Administradores
-- **Panel de administración** con estadísticas del sistema
-- **Gestión de usuarios** (crear, editar, activar/desactivar, cambiar contraseñas)
-- **Gestión de formularios** (crear, activar/desactivar, asignar por banco)
-- **Ver resultados** con filtros y descarga en Excel
-- **Carga de formularios** desde archivos Excel
-
-## Tecnologías Utilizadas
+## 🛠️ Tecnologías
 
 - **Frontend**: React 18 + TypeScript
-- **UI Framework**: Material-UI (MUI) v5
+- **UI**: Material-UI (MUI)
 - **Routing**: React Router v6
-- **Estado**: React Context API
-- **Notificaciones**: React Hot Toast
-- **Fechas**: date-fns
-- **Estilos**: CSS personalizado + Emotion
+- **Forms**: React Hook Form
+- **Notifications**: React Hot Toast
+- **Excel**: SheetJS (xlsx)
+- **Hosting**: Netlify
 
-## Instalación
+## 🚀 Instalación y Uso
 
-### Prerrequisitos
-- Node.js 16+ 
-- npm o yarn
+### Desarrollo Local
+```bash
+# Instalar dependencias
+npm install
 
-### Pasos de Instalación
+# Iniciar servidor de desarrollo
+npm start
 
-1. **Clonar el repositorio**
-   ```bash
-   git clone <url-del-repositorio>
-   cd inquest
-   ```
+# Construir para producción
+npm run build
+```
 
-2. **Instalar dependencias**
-   ```bash
-   npm install
-   ```
+### Deployment
+```bash
+# Build con configuración de producción
+set CI=false && npm run build
 
-3. **Iniciar la aplicación**
-   ```bash
-   npm start
-   ```
+# Los archivos están listos en /build para Netlify
+```
 
-4. **Abrir en el navegador**
-   ```
-   http://localhost:3000
-   ```
+## 👥 Usuarios de Prueba
 
-## Usuarios de Demostración
-
-### Usuario Banco
-- **Usuario**: `banco1`
-- **Contraseña**: `123456`
-- **Acceso**: Dashboard de formularios bancarios
-
-### Usuario Administrador
-- **Usuario**: `admin`
-- **Contraseña**: `admin`
+### 👨‍💼 Administrador
+- **RUT**: 12345678-9
+- **Contraseña**: admin123
 - **Acceso**: Panel completo de administración
 
-## Estructura del Proyecto
+### 🏦 Usuarios Banco
+
+| Banco | RUT | Contraseña |
+|-------|-----|------------|
+| Banco de Chile | 11111111-1 | banco123 |
+| Banco Santander | 22222222-2 | banco123 |
+| Banco Estado | 33333333-3 | banco123 |
+
+## 📚 Documentación
+
+- **[Guía Completa de Usuario](./GUIA_USUARIO.md)** - Manual detallado para todos los usuarios
+- **[Guía Rápida](./GUIA_RAPIDA.md)** - Referencia visual y acciones rápidas
+
+## 🎯 Funcionalidades por Rol
+
+### **Usuarios Banco**
+- ✅ Dashboard con formularios asignados
+- ✅ Completar formularios pendientes
+- ✅ Solicitar edición de formularios completados
+- ✅ Editar formularios con permisos habilitados
+- ✅ Estados visuales con códigos de color
+
+### **Administradores**
+- ✅ Gestión completa de formularios
+- ✅ Crear formularios manuales o desde Excel
+- ✅ Asignar formularios por banco
+- ✅ Configurar permisos de edición granulares
+- ✅ Gestionar estructura de columnas
+- ✅ Estadísticas y monitoreo en tiempo real
+
+## 🎨 Sistema de Estados Visuales
+
+### Para Bancos
+- 🟢 **Verde**: Formulario completado (solo lectura)
+- 🟡 **Amarillo**: Formulario completado y editable
+- ⚪ **Blanco**: Formulario pendiente de completar
+
+### Para Administradores
+- 🟢 **Activo**: Formulario habilitado para bancos
+- 🔴 **Inactivo**: Formulario deshabilitado
+- 📊 **Estadísticas**: Contadores en tiempo real
+
+## 🔄 Flujos Principales
+
+### **Flujo Banco Estándar**
+```
+Login → Dashboard → Formulario Pendiente → Editar → Completar → Guardar
+```
+
+### **Flujo Solicitud de Edición**
+```
+Formulario Verde → "Solicitar Edición" → Motivo → Enviar → Esperar Aprobación
+```
+
+### **Flujo Admin - Nuevo Formulario**
+```
+Gestión → "Nuevo Formulario" → Datos → Asignar Bancos → Configurar Permisos
+```
+
+### **Flujo Admin - Habilitar Edición**
+```
+Gestión → "Gestionar Asignaciones" → Verificar Completado → "Permitir Editar"
+```
+
+## 📁 Estructura del Proyecto
 
 ```
 src/
-├── components/           # Componentes principales
-│   ├── Login.tsx        # Página de inicio de sesión
-│   ├── Dashboard.tsx    # Dashboard para usuarios bancarios
-│   ├── Formulario.tsx   # Editor de formularios
-│   ├── AdminDashboard.tsx # Dashboard de administrador
-│   └── admin/           # Componentes de administración
-│       ├── VerResultados.tsx
-│       ├── GestionUsuarios.tsx
-│       └── GestionFormularios.tsx
-├── contexts/            # Contextos de React
-│   └── AuthContext.tsx  # Contexto de autenticación
-├── App.tsx              # Componente principal
-├── index.tsx            # Punto de entrada
-└── App.css              # Estilos globales
+├── components/
+│   ├── admin/
+│   │   └── GestionFormularios.tsx    # Panel administrativo
+│   ├── Dashboard.tsx                 # Dashboard principal bancos
+│   ├── FormularioDetalle.tsx         # Editor de formularios
+│   └── Login.tsx                     # Pantalla de login
+├── contexts/
+│   └── AuthContext.tsx               # Gestión de autenticación
+└── App.tsx                           # Componente principal
 ```
 
-## Funcionalidades Detalladas
+## ⚙️ Configuración
 
-### Sistema de Formularios
-- **Columnas predefinidas**: Primera columna no editable, resto editables
-- **Tipos de datos**: Texto, número, fecha, decimal
-- **Validaciones**: Campos requeridos, valores numéricos (no vacíos, no "-")
-- **Opciones especiales**: NA para valores desconocidos, advertencia para valores 0
-- **Duplicación de registros**: Agregar registros similares debajo del seleccionado
-
-### Gestión de Usuarios
-- **CRUD completo** de usuarios bancarios
-- **Activación/desactivación** individual
-- **Cambio de contraseñas** con validación
-- **Asignación de roles** (banco/admin)
-- **Estadísticas** de usuarios activos/inactivos
-
-### Gestión de Formularios
-- **Creación manual** de formularios
-- **Carga desde Excel** (.xlsx)
-- **Activación/desactivación** masiva e individual
+### Variables de Entorno (Netlify)
+```toml
+[build.environment]
+  NODE_VERSION = "18"
+  CI = "false"
 - **Asignación por banco** con switches independientes
 - **Fechas límite** configurables
 
