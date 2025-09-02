@@ -182,6 +182,19 @@ const GestionFormularios: React.FC = () => {
   const [archivoExcel, setArchivoExcel] = useState<File | null>(null);
   const [formularioRecienAgregado, setFormularioRecienAgregado] = useState<string | null>(null);
 
+  // Simular algunos formularios completados para demostrar la funcionalidad
+  useEffect(() => {
+    const completedForms = JSON.parse(localStorage.getItem('completed_forms') || '{}');
+    // Simular que Banco de Chile completó el formulario 1 y Banco Santander completó el formulario 3
+    if (Object.keys(completedForms).length === 0) {
+      const simulatedCompletions = {
+        '1_1': true, // Formulario 1, Banco de Chile
+        '3_2': true, // Formulario 3, Banco Santander
+      };
+      localStorage.setItem('completed_forms', JSON.stringify(simulatedCompletions));
+    }
+  }, []);
+
   const handleToggleFormulario = (formularioId: string) => {
     setFormularios(prev => prev.map(f => 
       f.id === formularioId ? { ...f, activo: !f.activo } : f
@@ -279,25 +292,60 @@ const GestionFormularios: React.FC = () => {
     setModalEstructuraFormulario(true);
   };
 
-  const handleToggleEditableByBanco = (formularioId: string) => {
+  // Función para verificar si un banco completó un formulario
+  const isBankFormCompleted = (formularioId: string, bancoId: string): boolean => {
+    // Simular verificación de completado basado en localStorage
+    const completedForms = JSON.parse(localStorage.getItem('completed_forms') || '{}');
+    return completedForms[`${formularioId}_${bancoId}`] === true;
+  };
+
+  const handleToggleEditableByBanco = (formularioId: string, bancoId: string) => {
     setFormularios(prev => {
-      const updated = prev.map(f => 
-        f.id === formularioId ? { ...f, editableByBanco: !f.editableByBanco } : f
-      );
+      const updated = prev.map(f => {
+        if (f.id === formularioId) {
+          return {
+            ...f,
+            asignaciones: f.asignaciones.map(a => 
+              a.bancoId === bancoId ? { ...a, editableByBanco: !a.editableByBanco } : a
+            )
+          };
+        }
+        return f;
+      });
       
       // Guardar configuración en localStorage para que la lean los bancos
       const adminSettings = JSON.parse(localStorage.getItem('admin_form_settings') || '{}');
       const formulario = updated.find(f => f.id === formularioId);
       if (formulario) {
-        adminSettings[formularioId] = {
-          editableByBanco: formulario.editableByBanco,
-          lastUpdated: new Date().toISOString()
-        };
-        localStorage.setItem('admin_form_settings', JSON.stringify(adminSettings));
+        const asignacion = formulario.asignaciones.find(a => a.bancoId === bancoId);
+        if (asignacion) {
+          if (!adminSettings[formularioId]) {
+            adminSettings[formularioId] = {};
+          }
+          adminSettings[formularioId][bancoId] = {
+            editableByBanco: asignacion.editableByBanco,
+            lastUpdated: new Date().toISOString()
+          };
+          localStorage.setItem('admin_form_settings', JSON.stringify(adminSettings));
+        }
       }
       
       return updated;
     });
+    
+    // Actualizar formularioSeleccionado para reflejar cambios en tiempo real
+    if (formularioSeleccionado && formularioSeleccionado.id === formularioId) {
+      setFormularioSeleccionado(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          asignaciones: prev.asignaciones.map(a => 
+            a.bancoId === bancoId ? { ...a, editableByBanco: !a.editableByBanco } : a
+          )
+        };
+      });
+    }
+    
     toast.success('Permisos de edición actualizados');
   };
 
@@ -467,21 +515,21 @@ const GestionFormularios: React.FC = () => {
                      </Grid>
                    </Grid>
 
-                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                     <Typography variant="body2" color="textSecondary">
-                       Estado del Formulario
-                     </Typography>
-                     <Switch
-                       checked={formulario.activo}
-                       onChange={() => handleToggleFormulario(formulario.id)}
-                       color="success"
-                     />
-                   </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      Estado del Formulario
+                    </Typography>
+                    <Switch
+                      checked={formulario.activo}
+                      onChange={() => handleToggleFormulario(formulario.id)}
+                      color="success"
+                    />
+                  </Box>
                 </CardContent>
 
                 <CardActions>
                   <Grid container spacing={1}>
-                    <Grid item xs={12}>
+                    <Grid item xs={6}>
                       <Button
                         size="small"
                         variant="outlined"
@@ -490,18 +538,6 @@ const GestionFormularios: React.FC = () => {
                         fullWidth
                       >
                         Gestionar Asignaciones
-                      </Button>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Button
-                        size="small"
-                        variant={formulario.editableByBanco ? "contained" : "outlined"}
-                        color={formulario.editableByBanco ? "success" : "primary"}
-                        startIcon={<EditIcon />}
-                        onClick={() => handleToggleEditableByBanco(formulario.id)}
-                        fullWidth
-                      >
-                        {formulario.editableByBanco ? 'Edición Permitida' : 'Permitir Editar'}
                       </Button>
                     </Grid>
                     <Grid item xs={6}>
@@ -620,31 +656,77 @@ const GestionFormularios: React.FC = () => {
           <DialogContent>
             {formularioSeleccionado && (
               <Box sx={{ mt: 2 }}>
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  <Typography variant="body2">
+                    <strong>Nota:</strong> Los permisos de edición solo se pueden activar para bancos que hayan completado el formulario.
+                    Los bancos con formularios incompletos no podrán editar hasta completar la primera versión.
+                  </Typography>
+                </Alert>
+                
                 <Typography variant="h6" gutterBottom>
-                  Asignaciones por Banco
+                  Asignaciones y Permisos por Banco
                 </Typography>
                 <Grid container spacing={2}>
-                  {formularioSeleccionado.asignaciones.map((asignacion) => (
-                    <Grid item xs={12} key={asignacion.bancoId}>
-                      <Box sx={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center',
-                        p: 2,
-                        border: '1px solid #e0e0e0',
-                        borderRadius: 1
-                      }}>
-                        <Typography variant="body1">
-                          {asignacion.bancoNombre}
-                        </Typography>
-                        <Switch
-                          checked={asignacion.activo}
-                          onChange={() => handleToggleAsignacion(formularioSeleccionado.id, asignacion.bancoId)}
-                          color="success"
-                        />
-                      </Box>
-                    </Grid>
-                  ))}
+                  {formularioSeleccionado.asignaciones.map((asignacion) => {
+                    const isCompleted = isBankFormCompleted(formularioSeleccionado.id, asignacion.bancoId);
+                    return (
+                      <Grid item xs={12} key={asignacion.bancoId}>
+                        <Box sx={{ 
+                          p: 2,
+                          border: '1px solid #e0e0e0',
+                          borderRadius: 1,
+                          backgroundColor: isCompleted ? '#f8f9fa' : '#fff'
+                        }}>
+                          <Grid container spacing={2} alignItems="center">
+                            <Grid item xs={4}>
+                              <Typography variant="body1" fontWeight="medium">
+                                {asignacion.bancoNombre}
+                              </Typography>
+                              <Typography variant="caption" color="textSecondary">
+                                {isCompleted ? 'Formulario completado' : 'Formulario pendiente'}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={3}>
+                              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <Typography variant="caption" color="textSecondary">
+                                  Asignado
+                                </Typography>
+                                <Switch
+                                  checked={asignacion.activo}
+                                  onChange={() => handleToggleAsignacion(formularioSeleccionado.id, asignacion.bancoId)}
+                                  color="success"
+                                  size="small"
+                                />
+                              </Box>
+                            </Grid>
+                            <Grid item xs={5}>
+                              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <Typography variant="caption" color="textSecondary">
+                                  Permitir Editar
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Switch
+                                    checked={asignacion.editableByBanco}
+                                    onChange={() => handleToggleEditableByBanco(formularioSeleccionado.id, asignacion.bancoId)}
+                                    color="warning"
+                                    size="small"
+                                    disabled={!isCompleted || !asignacion.activo}
+                                  />
+                                  {!isCompleted && (
+                                    <Tooltip title="El banco debe completar el formulario primero">
+                                      <Typography variant="caption" color="textSecondary">
+                                        (Requiere completar)
+                                      </Typography>
+                                    </Tooltip>
+                                  )}
+                                </Box>
+                              </Box>
+                            </Grid>
+                          </Grid>
+                        </Box>
+                      </Grid>
+                    );
+                  })}
                 </Grid>
               </Box>
             )}
