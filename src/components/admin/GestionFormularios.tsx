@@ -24,7 +24,6 @@ import {
   Toolbar,
   Switch,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
   Grid,
@@ -32,19 +31,12 @@ import {
   CardContent,
   CardActions,
   Alert,
-  Checkbox,
-  FormControlLabel,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails
+  Checkbox
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
   Upload as UploadIcon,
-  ExpandMore as ExpandMoreIcon,
   Description as DescriptionIcon,
   Settings as SettingsIcon,
   CloudUpload as CloudUploadIcon
@@ -79,7 +71,6 @@ interface Formulario {
 
 const GestionFormularios: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   
   const [formularios, setFormularios] = useState<Formulario[]>([
     {
@@ -275,12 +266,6 @@ const GestionFormularios: React.FC = () => {
     setArchivoExcel(null);
   };
 
-  const handleEliminarFormulario = (formularioId: string) => {
-    if (window.confirm('¿Está seguro de que desea eliminar este formulario?')) {
-      setFormularios(prev => prev.filter(f => f.id !== formularioId));
-      toast.success('Formulario eliminado exitosamente');
-    }
-  };
 
   const abrirModalAsignaciones = (formulario: Formulario) => {
     setFormularioSeleccionado(formulario);

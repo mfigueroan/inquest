@@ -50,7 +50,6 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [formularios, setFormularios] = useState<Formulario[]>([]);
   const [modalSolicitudEdicion, setModalSolicitudEdicion] = useState(false);
-  const [formularioSolicitud, setFormularioSolicitud] = useState<Formulario | null>(null);
   const [solicitudData, setSolicitudData] = useState({
     asunto: '',
     destinatario: 'admin@inquest.cl',
@@ -155,7 +154,6 @@ const Dashboard: React.FC = () => {
         destinatario: 'admin@inquest.cl',
         motivo: ''
       });
-      setFormularioSolicitud(formulario);
       setModalSolicitudEdicion(true);
       return;
     }
@@ -173,7 +171,6 @@ const Dashboard: React.FC = () => {
     toast.success('Solicitud de edición enviada al administrador');
     setModalSolicitudEdicion(false);
     setSolicitudData({ asunto: '', destinatario: 'admin@inquest.cl', motivo: '' });
-    setFormularioSolicitud(null);
   };
 
   const getEditButtonText = (formulario: Formulario) => {
