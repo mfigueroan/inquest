@@ -52,6 +52,14 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
+interface ColumnConfig {
+  id: string;
+  nombre: string;
+  tipo: 'texto' | 'numero' | 'fecha' | 'genero';
+  requerido: boolean;
+  editable: boolean;
+}
+
 interface Formulario {
   id: string;
   nombre: string;
@@ -59,6 +67,8 @@ interface Formulario {
   fechaCreacion: string;
   fechaLimite: string;
   activo: boolean;
+  editableByBanco: boolean;
+  columnas?: ColumnConfig[];
   asignaciones: {
     bancoId: string;
     bancoNombre: string;
@@ -78,6 +88,7 @@ const GestionFormularios: React.FC = () => {
       fechaCreacion: '2024-01-15',
       fechaLimite: '2024-12-31',
       activo: true,
+      editableByBanco: false,
       asignaciones: [
         { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true },
         { bancoId: '2', bancoNombre: 'Banco Santander', activo: true },
@@ -91,6 +102,7 @@ const GestionFormularios: React.FC = () => {
       fechaCreacion: '2024-03-01',
       fechaLimite: '2024-10-31',
       activo: true,
+      editableByBanco: false,
       asignaciones: [
         { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true },
         { bancoId: '2', bancoNombre: 'Banco Santander', activo: true },
@@ -104,6 +116,7 @@ const GestionFormularios: React.FC = () => {
       fechaCreacion: '2024-04-01',
       fechaLimite: '2024-12-15',
       activo: true,
+      editableByBanco: false,
       asignaciones: [
         { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true },
         { bancoId: '2', bancoNombre: 'Banco Santander', activo: false },
@@ -117,6 +130,7 @@ const GestionFormularios: React.FC = () => {
       fechaCreacion: '2024-05-01',
       fechaLimite: '2024-11-30',
       activo: true,
+      editableByBanco: false,
       asignaciones: [
         { bancoId: '1', bancoNombre: 'Banco de Chile', activo: false },
         { bancoId: '2', bancoNombre: 'Banco Santander', activo: true },
@@ -133,6 +147,17 @@ const GestionFormularios: React.FC = () => {
     fechaCreacion: '2024-02-01',
     fechaLimite: '2024-11-30',
     activo: true,
+    editableByBanco: false,
+    columnas: [
+      { id: '1', nombre: 'COD. CARGO', tipo: 'texto', requerido: true, editable: false },
+      { id: '2', nombre: 'NOMBRE GENÉRICO DEL CARGO', tipo: 'texto', requerido: true, editable: false },
+      { id: '3', nombre: 'NIVEL DEL CARGO (HAY, MERCER O OGS)', tipo: 'texto', requerido: false, editable: true },
+      { id: '4', nombre: '$ BONO ANUAL PAGADO EL 2025 POR EL DESEMPEÑO DEL 2024', tipo: 'numero', requerido: true, editable: true },
+      { id: '5', nombre: 'INCENTIVOS TRIMESTRALES/ MENSUALES PAGADOS EL 2024', tipo: 'numero', requerido: true, editable: true },
+      { id: '6', nombre: '$ TOTAL COMISIONES PAGADAS EL 2024', tipo: 'numero', requerido: false, editable: false },
+      { id: '7', nombre: 'FECHA DE NACIMIENTO (dd/mm/aaaa)', tipo: 'fecha', requerido: false, editable: true },
+      { id: '8', nombre: 'GÉNERO (Masculino o Femenino)', tipo: 'genero', requerido: false, editable: true }
+    ],
     asignaciones: [
       { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true },
       { bancoId: '2', bancoNombre: 'Banco Santander', activo: true },
@@ -143,6 +168,7 @@ const GestionFormularios: React.FC = () => {
   const [modalNuevoFormulario, setModalNuevoFormulario] = useState(false);
   const [modalCargarExcel, setModalCargarExcel] = useState(false);
   const [modalAsignaciones, setModalAsignaciones] = useState(false);
+  const [modalEstructuraFormulario, setModalEstructuraFormulario] = useState(false);
   const [formularioSeleccionado, setFormularioSeleccionado] = useState<Formulario | null>(null);
   
   // Estados para formularios
@@ -190,6 +216,7 @@ const GestionFormularios: React.FC = () => {
       fechaCreacion: new Date().toISOString().split('T')[0],
       fechaLimite: nuevoFormulario.fechaLimite,
       activo: true,
+      editableByBanco: false,
       asignaciones: [
         { bancoId: '1', bancoNombre: 'Banco de Chile', activo: true },
         { bancoId: '2', bancoNombre: 'Banco Santander', activo: true },
@@ -244,6 +271,49 @@ const GestionFormularios: React.FC = () => {
   const abrirModalAsignaciones = (formulario: Formulario) => {
     setFormularioSeleccionado(formulario);
     setModalAsignaciones(true);
+  };
+
+  const abrirModalEstructura = (formulario: Formulario) => {
+    setFormularioSeleccionado(formulario);
+    setModalEstructuraFormulario(true);
+  };
+
+  const handleToggleEditableByBanco = (formularioId: string) => {
+    setFormularios(prev => {
+      const updated = prev.map(f => 
+        f.id === formularioId ? { ...f, editableByBanco: !f.editableByBanco } : f
+      );
+      
+      // Guardar configuración en localStorage para que la lean los bancos
+      const adminSettings = JSON.parse(localStorage.getItem('admin_form_settings') || '{}');
+      const formulario = updated.find(f => f.id === formularioId);
+      if (formulario) {
+        adminSettings[formularioId] = {
+          editableByBanco: formulario.editableByBanco,
+          lastUpdated: new Date().toISOString()
+        };
+        localStorage.setItem('admin_form_settings', JSON.stringify(adminSettings));
+      }
+      
+      return updated;
+    });
+    toast.success('Permisos de edición actualizados');
+  };
+
+  const handleUpdateColumnConfig = (columnId: string, field: keyof ColumnConfig, value: any) => {
+    if (!formularioSeleccionado) return;
+    
+    const updatedFormulario = {
+      ...formularioSeleccionado,
+      columnas: formularioSeleccionado.columnas?.map(col => 
+        col.id === columnId ? { ...col, [field]: value } : col
+      ) || []
+    };
+    
+    setFormularioSeleccionado(updatedFormulario);
+    setFormularios(prev => prev.map(f => 
+      f.id === formularioSeleccionado.id ? updatedFormulario : f
+    ));
   };
 
   const handleArchivoSeleccionado = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -409,15 +479,42 @@ const GestionFormularios: React.FC = () => {
                 </CardContent>
 
                 <CardActions>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<SettingsIcon />}
-                    onClick={() => abrirModalAsignaciones(formulario)}
-                    fullWidth
-                  >
-                    Gestionar Asignaciones
-                  </Button>
+                  <Grid container spacing={1}>
+                    <Grid item xs={12}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<SettingsIcon />}
+                        onClick={() => abrirModalAsignaciones(formulario)}
+                        fullWidth
+                      >
+                        Gestionar Asignaciones
+                      </Button>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Button
+                        size="small"
+                        variant={formulario.editableByBanco ? "contained" : "outlined"}
+                        color={formulario.editableByBanco ? "success" : "primary"}
+                        startIcon={<EditIcon />}
+                        onClick={() => handleToggleEditableByBanco(formulario.id)}
+                        fullWidth
+                      >
+                        {formulario.editableByBanco ? 'Edición Permitida' : 'Permitir Editar'}
+                      </Button>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<DescriptionIcon />}
+                        onClick={() => abrirModalEstructura(formulario)}
+                        fullWidth
+                      >
+                        Estructura
+                      </Button>
+                    </Grid>
+                  </Grid>
                 </CardActions>
               </Card>
             </Grid>
@@ -553,6 +650,81 @@ const GestionFormularios: React.FC = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setModalAsignaciones(false)}>Cerrar</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Modal Estructura del Formulario */}
+        <Dialog open={modalEstructuraFormulario} onClose={() => setModalEstructuraFormulario(false)} maxWidth="lg" fullWidth>
+          <DialogTitle>
+            Estructura del Formulario - {formularioSeleccionado?.nombre}
+          </DialogTitle>
+          <DialogContent>
+            {formularioSeleccionado && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  Columnas y Tipos de Datos
+                </Typography>
+                {formularioSeleccionado.columnas && formularioSeleccionado.columnas.length > 0 ? (
+                  <TableContainer component={Paper}>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell><strong>Columna</strong></TableCell>
+                          <TableCell><strong>Tipo de Dato</strong></TableCell>
+                          <TableCell><strong>Requerido</strong></TableCell>
+                          <TableCell><strong>Editable</strong></TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {formularioSeleccionado.columnas.map((columna) => (
+                          <TableRow key={columna.id}>
+                            <TableCell>
+                              <Typography variant="body2">
+                                {columna.nombre}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <FormControl size="small" sx={{ minWidth: 120 }}>
+                                <Select
+                                  value={columna.tipo}
+                                  onChange={(e) => handleUpdateColumnConfig(columna.id, 'tipo', e.target.value)}
+                                >
+                                  <MenuItem value="texto">texto</MenuItem>
+                                  <MenuItem value="numero">número</MenuItem>
+                                  <MenuItem value="fecha">fecha</MenuItem>
+                                  <MenuItem value="genero">género</MenuItem>
+                                </Select>
+                              </FormControl>
+                            </TableCell>
+                            <TableCell>
+                              <Checkbox
+                                checked={columna.requerido}
+                                onChange={(e) => handleUpdateColumnConfig(columna.id, 'requerido', e.target.checked)}
+                                color="error"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Checkbox
+                                checked={columna.editable}
+                                onChange={(e) => handleUpdateColumnConfig(columna.id, 'editable', e.target.checked)}
+                                color="success"
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <Alert severity="info">
+                    Este formulario no tiene columnas configuradas. Las columnas se cargan automáticamente cuando se importa un archivo Excel.
+                  </Alert>
+                )}
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setModalEstructuraFormulario(false)}>Cerrar</Button>
           </DialogActions>
         </Dialog>
       </Container>

@@ -91,6 +91,12 @@ const VerResultados: React.FC = () => {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [formularioSeleccionado, setFormularioSeleccionado] = useState<any>(null);
   const [comentarios, setComentarios] = useState<{ [key: string]: string }>({});
+  const [modalEmail, setModalEmail] = useState(false);
+  const [emailData, setEmailData] = useState({
+    asunto: '',
+    destinatario: '',
+    cuerpo: ''
+  });
 
   const [resultados] = useState<FormularioResultado[]>([
     {
@@ -196,8 +202,18 @@ const VerResultados: React.FC = () => {
   };
 
   const handleEnviarNotificacion = (resultado: FormularioResultado) => {
-    toast.success(`Enviando notificación de comentarios para ${resultado.formulario} - ${resultado.banco}`);
-    // Aquí iría la lógica real de envío de notificación
+    // Preparar datos del email con los comentarios
+    const comentariosTexto = Object.entries(comentarios)
+      .filter(([_, comentario]) => comentario.trim() !== '')
+      .map(([codigo, comentario]) => `${codigo}: ${comentario}`)
+      .join('\n');
+    
+    setEmailData({
+      asunto: `Comentarios para ${resultado.formulario} - ${resultado.banco}`,
+      destinatario: `contacto@${resultado.banco.toLowerCase().replace(/\s+/g, '')}.cl`,
+      cuerpo: `Estimados,\n\nA continuación los comentarios para el formulario "${resultado.formulario}":\n\n${comentariosTexto}\n\nSaludos cordiales,\nEquipo de Administración`
+    });
+    setModalEmail(true);
   };
 
   const handleVisualizarFormulario = (resultado: FormularioResultado) => {
@@ -216,6 +232,28 @@ const VerResultados: React.FC = () => {
       ...prev,
       [filaId]: comentario
     }));
+  };
+
+  const handleGuardarComentarios = () => {
+    // Simular guardado en base de datos
+    const comentariosGuardados = Object.entries(comentarios).filter(([_, comentario]) => comentario.trim() !== '');
+    
+    if (comentariosGuardados.length === 0) {
+      toast.error('No hay comentarios para guardar');
+      return;
+    }
+    
+    // Aquí se enviarían los comentarios a la API
+    console.log('Guardando comentarios:', comentarios);
+    toast.success(`${comentariosGuardados.length} comentarios guardados exitosamente`);
+  };
+
+  const handleEnviarEmail = () => {
+    // Simular envío de email
+    console.log('Enviando email:', emailData);
+    toast.success('Email enviado exitosamente');
+    setModalEmail(false);
+    setEmailData({ asunto: '', destinatario: '', cuerpo: '' });
   };
 
   const getEstadoColor = (estado: string) => {
@@ -418,10 +456,7 @@ const VerResultados: React.FC = () => {
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button
                 variant="outlined"
-                onClick={() => {
-                  // Aquí se guardarían los comentarios en la base de datos
-                  toast.success('Comentarios guardados exitosamente');
-                }}
+                onClick={handleGuardarComentarios}
               >
                 Guardar Comentarios
               </Button>
@@ -644,10 +679,7 @@ const VerResultados: React.FC = () => {
              <Button onClick={() => setMostrarFormulario(false)}>Cerrar</Button>
              <Button 
                variant="outlined"
-               onClick={() => {
-                 // Aquí se guardarían los comentarios en la base de datos
-                 toast.success('Comentarios guardados exitosamente');
-               }}
+               onClick={handleGuardarComentarios}
              >
                Guardar Comentarios
              </Button>
@@ -676,6 +708,60 @@ const VerResultados: React.FC = () => {
                Descargar Excel
              </Button>
            </DialogActions>
+        </Dialog>
+
+        {/* Modal Email */}
+        <Dialog open={modalEmail} onClose={() => setModalEmail(false)} maxWidth="md" fullWidth>
+          <DialogTitle>
+            Enviar Comentarios por Email
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Asunto"
+                    value={emailData.asunto}
+                    onChange={(e) => setEmailData({...emailData, asunto: e.target.value})}
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Destinatario"
+                    value={emailData.destinatario}
+                    onChange={(e) => setEmailData({...emailData, destinatario: e.target.value})}
+                    variant="outlined"
+                    type="email"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Cuerpo del mensaje"
+                    value={emailData.cuerpo}
+                    onChange={(e) => setEmailData({...emailData, cuerpo: e.target.value})}
+                    variant="outlined"
+                    multiline
+                    rows={8}
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setModalEmail(false)}>Cancelar</Button>
+            <Button 
+              onClick={handleEnviarEmail}
+              variant="contained"
+              color="primary"
+              startIcon={<NotificationsIcon />}
+            >
+              Enviar Email
+            </Button>
+          </DialogActions>
         </Dialog>
       </Container>
     </Box>

@@ -13,7 +13,12 @@ import {
   Toolbar,
   Chip,
   IconButton,
-  Tooltip
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -22,7 +27,8 @@ import {
   CheckCircle as CheckCircleIcon,
   Schedule as ScheduleIcon,
   Download as DownloadIcon,
-  Edit as EditIcon
+  Edit as EditIcon,
+  Email as EmailIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { format, addDays } from 'date-fns';
@@ -36,12 +42,20 @@ interface Formulario {
   fechaLimite: Date;
   completado: boolean;
   activo: boolean;
+  editableByBanco: boolean;
 }
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [formularios, setFormularios] = useState<Formulario[]>([]);
+  const [modalSolicitudEdicion, setModalSolicitudEdicion] = useState(false);
+  const [formularioSolicitud, setFormularioSolicitud] = useState<Formulario | null>(null);
+  const [solicitudData, setSolicitudData] = useState({
+    asunto: '',
+    destinatario: 'admin@inquest.cl',
+    motivo: ''
+  });
 
   useEffect(() => {
     // Formularios basados en las hojas del Excel actualizado
@@ -52,15 +66,17 @@ const Dashboard: React.FC = () => {
         descripcion: 'Levantamiento de cargos de apoyo para corredores, asset management y wealth management',
         fechaLimite: addDays(new Date(), 15),
         completado: true,
-        activo: true
+        activo: true,
+        editableByBanco: false
       },
       {
         id: '2',
         nombre: 'Negociación Internacional y Comercio',
         descripcion: 'Formulario para cargos de negociación internacional y comercio',
         fechaLimite: addDays(new Date(), 8),
-        completado: false,
-        activo: true
+        completado: true,
+        activo: true,
+        editableByBanco: false
       },
       {
         id: '3',
@@ -68,7 +84,8 @@ const Dashboard: React.FC = () => {
         descripcion: 'Formulario específico para BP Wealth Management',
         fechaLimite: addDays(new Date(), 22),
         completado: true,
-        activo: true
+        activo: true,
+        editableByBanco: false
       },
       {
         id: '4',
@@ -76,7 +93,8 @@ const Dashboard: React.FC = () => {
         descripcion: 'Formulario para cargos de corredora',
         fechaLimite: addDays(new Date(), 12),
         completado: true,
-        activo: true
+        activo: true,
+        editableByBanco: false
       },
       {
         id: '5',
@@ -84,16 +102,25 @@ const Dashboard: React.FC = () => {
         descripcion: 'Formulario para cargos de asset management',
         fechaLimite: addDays(new Date(), 18),
         completado: true,
-        activo: true
+        activo: true,
+        editableByBanco: false
       }
     ];
 
     // Verificar formularios completados en localStorage
     const formulariosCompletados = JSON.parse(localStorage.getItem('formularios_completados') || '[]');
     
+    // Verificar configuración de admin para permisos de edición
+    const adminSettings = JSON.parse(localStorage.getItem('admin_form_settings') || '{}');
+    
     const formulariosActualizados = mockFormularios.map(formulario => {
       const completado = formulariosCompletados.find((f: any) => f.id === formulario.id);
-      return completado ? { ...formulario, completado: true } : formulario;
+      const adminSetting = adminSettings[formulario.id];
+      return {
+        ...formulario,
+        completado: completado ? true : formulario.completado,
+        editableByBanco: adminSetting ? adminSetting.editableByBanco : formulario.editableByBanco
+      };
     });
 
     setFormularios(formulariosActualizados);
@@ -121,11 +148,44 @@ const Dashboard: React.FC = () => {
 
   const handleEditFormulario = (formulario: Formulario, event: React.MouseEvent) => {
     event.stopPropagation();
-    if (formulario.completado) {
-      toast.error('El administrador debe dar permiso para editar este formulario completado');
+    if (formulario.completado && !formulario.editableByBanco) {
+      // Abrir modal de solicitud de edición
+      setSolicitudData({
+        asunto: `Solicitud de edición - ${formulario.nombre}`,
+        destinatario: 'admin@inquest.cl',
+        motivo: ''
+      });
+      setFormularioSolicitud(formulario);
+      setModalSolicitudEdicion(true);
       return;
     }
     navigate(`/formulario/${formulario.id}`);
+  };
+
+  const handleEnviarSolicitud = () => {
+    if (!solicitudData.motivo.trim()) {
+      toast.error('Por favor ingrese el motivo de la solicitud');
+      return;
+    }
+    
+    // Simular envío de solicitud
+    console.log('Enviando solicitud:', solicitudData);
+    toast.success('Solicitud de edición enviada al administrador');
+    setModalSolicitudEdicion(false);
+    setSolicitudData({ asunto: '', destinatario: 'admin@inquest.cl', motivo: '' });
+    setFormularioSolicitud(null);
+  };
+
+  const getEditButtonText = (formulario: Formulario) => {
+    if (!formulario.completado) return 'Editar';
+    if (formulario.editableByBanco) return 'Editar';
+    return 'Solicitar Edición';
+  };
+
+  const getEditButtonColor = (formulario: Formulario) => {
+    if (!formulario.completado) return 'secondary';
+    if (formulario.editableByBanco) return 'warning';
+    return 'primary';
   };
 
   const getStatusColor = (formulario: Formulario) => {
@@ -236,12 +296,12 @@ const Dashboard: React.FC = () => {
                     <Button
                       size="small"
                       variant="contained"
-                      color="secondary"
-                      startIcon={<EditIcon />}
+                      color={getEditButtonColor(formulario)}
+                      startIcon={formulario.completado && !formulario.editableByBanco ? <EmailIcon /> : <EditIcon />}
                       onClick={(e) => handleEditFormulario(formulario, e)}
                       sx={{ flex: 1 }}
                     >
-                      Editar
+                      {getEditButtonText(formulario)}
                     </Button>
                   </Box>
                 </CardActions>
@@ -257,6 +317,64 @@ const Dashboard: React.FC = () => {
             </Typography>
           </Box>
         )}
+
+        {/* Modal Solicitud de Edición */}
+        <Dialog open={modalSolicitudEdicion} onClose={() => setModalSolicitudEdicion(false)} maxWidth="md" fullWidth>
+          <DialogTitle>
+            Solicitar Permiso de Edición
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Asunto"
+                    value={solicitudData.asunto}
+                    onChange={(e) => setSolicitudData({...solicitudData, asunto: e.target.value})}
+                    variant="outlined"
+                    disabled
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Destinatario"
+                    value={solicitudData.destinatario}
+                    onChange={(e) => setSolicitudData({...solicitudData, destinatario: e.target.value})}
+                    variant="outlined"
+                    type="email"
+                    disabled
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Motivo de la solicitud"
+                    value={solicitudData.motivo}
+                    onChange={(e) => setSolicitudData({...solicitudData, motivo: e.target.value})}
+                    variant="outlined"
+                    multiline
+                    rows={6}
+                    placeholder="Por favor explique el motivo por el cual necesita editar este formulario completado..."
+                    required
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setModalSolicitudEdicion(false)}>Cancelar</Button>
+            <Button 
+              onClick={handleEnviarSolicitud}
+              variant="contained"
+              color="primary"
+              startIcon={<EmailIcon />}
+            >
+              Enviar Solicitud
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   );
