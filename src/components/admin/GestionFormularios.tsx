@@ -66,6 +66,8 @@ interface Formulario {
     bancoNombre: string;
     activo: boolean;
     editableByBanco: boolean;
+    fechaLimite?: string;
+    reminderDays?: number; // 3, 5 o 7 días antes
   }[];
 }
 
@@ -161,6 +163,13 @@ const GestionFormularios: React.FC = () => {
   const [modalCargarExcel, setModalCargarExcel] = useState(false);
   const [modalAsignaciones, setModalAsignaciones] = useState(false);
   const [modalEstructuraFormulario, setModalEstructuraFormulario] = useState(false);
+  const [modalPreviewEmail, setModalPreviewEmail] = useState(false);
+  const [previewEmailData, setPreviewEmailData] = useState<{
+    formularioNombre: string;
+    bancoNombre: string;
+    fechaLimite: string;
+    reminderDays: number;
+  } | null>(null);
   const [formularioSeleccionado, setFormularioSeleccionado] = useState<Formulario | null>(null);
   
   // Estados para formularios
@@ -185,6 +194,43 @@ const GestionFormularios: React.FC = () => {
       localStorage.setItem('completed_forms', JSON.stringify(simulatedCompletions));
     }
   }, []);
+
+  // Cargar configuraciones previas (deadlines y recordatorios) desde localStorage al iniciar
+  useEffect(() => {
+    const adminSettings = JSON.parse(localStorage.getItem('admin_form_settings') || '{}');
+    if (!adminSettings || typeof adminSettings !== 'object') return;
+    setFormularios(prev => prev.map(f => {
+      const perForm = adminSettings[f.id] || {};
+      return {
+        ...f,
+        asignaciones: f.asignaciones.map(a => {
+          const perBank = perForm[a.bancoId] || {};
+          return {
+            ...a,
+            editableByBanco: perBank.editableByBanco ?? a.editableByBanco,
+            fechaLimite: perBank.fechaLimite ?? a.fechaLimite ?? f.fechaLimite,
+            reminderDays: perBank.reminderDays ?? a.reminderDays ?? 5,
+          };
+        })
+      };
+    }));
+  }, []);
+
+  const saveAdminSettings = (
+    formularioId: string,
+    bancoId: string,
+    data: Partial<{ editableByBanco: boolean; fechaLimite: string; reminderDays: number }>
+  ) => {
+    const adminSettings = JSON.parse(localStorage.getItem('admin_form_settings') || '{}');
+    if (!adminSettings[formularioId]) adminSettings[formularioId] = {};
+    const prevBank = adminSettings[formularioId][bancoId] || {};
+    adminSettings[formularioId][bancoId] = {
+      ...prevBank,
+      ...data,
+      lastUpdated: new Date().toISOString()
+    };
+    localStorage.setItem('admin_form_settings', JSON.stringify(adminSettings));
+  };
 
   const handleToggleFormulario = (formularioId: string) => {
     setFormularios(prev => prev.map(f => 
@@ -266,6 +312,65 @@ const GestionFormularios: React.FC = () => {
     setArchivoExcel(null);
   };
 
+  const handleChangeAsignacionDeadline = (formularioId: string, bancoId: string, nuevaFecha: string) => {
+    setFormularios(prev => prev.map(f => {
+      if (f.id !== formularioId) return f;
+      return {
+        ...f,
+        asignaciones: f.asignaciones.map(a => a.bancoId === bancoId ? { ...a, fechaLimite: nuevaFecha } : a)
+      };
+    }));
+    if (formularioSeleccionado && formularioSeleccionado.id === formularioId) {
+      setFormularioSeleccionado(prev => prev ? {
+        ...prev,
+        asignaciones: prev.asignaciones.map(a => a.bancoId === bancoId ? { ...a, fechaLimite: nuevaFecha } : a)
+      } : prev);
+    }
+    saveAdminSettings(formularioId, bancoId, { fechaLimite: nuevaFecha });
+  };
+
+  const handleChangeReminderDays = (formularioId: string, bancoId: string, days: number) => {
+    setFormularios(prev => prev.map(f => {
+      if (f.id !== formularioId) return f;
+      return {
+        ...f,
+        asignaciones: f.asignaciones.map(a => a.bancoId === bancoId ? { ...a, reminderDays: days } : a)
+      };
+    }));
+    if (formularioSeleccionado && formularioSeleccionado.id === formularioId) {
+      setFormularioSeleccionado(prev => prev ? {
+        ...prev,
+        asignaciones: prev.asignaciones.map(a => a.bancoId === bancoId ? { ...a, reminderDays: days } : a)
+      } : prev);
+    }
+    saveAdminSettings(formularioId, bancoId, { reminderDays: days });
+  };
+
+  const handleApplyDefaultDeadlineToAll = () => {
+    if (!formularioSeleccionado) return;
+    const def = formularioSeleccionado.fechaLimite;
+    if (!def) return;
+    setFormularios(prev => prev.map(f => {
+      if (f.id !== formularioSeleccionado.id) return f;
+      return {
+        ...f,
+        asignaciones: f.asignaciones.map(a => ({ ...a, fechaLimite: def }))
+      };
+    }));
+    setFormularioSeleccionado(prev => prev ? {
+      ...prev,
+      asignaciones: prev.asignaciones.map(a => ({ ...a, fechaLimite: def }))
+    } : prev);
+    formularioSeleccionado.asignaciones.forEach(a => saveAdminSettings(formularioSeleccionado.id, a.bancoId, { fechaLimite: def }));
+    toast.success('Fecha límite aplicada a todos los bancos');
+  };
+
+  const openPreviewEmail = (formularioNombre: string, bancoNombre: string, fechaLimite?: string, reminderDays?: number) => {
+    const fecha = fechaLimite || '';
+    const days = reminderDays || 5;
+    setPreviewEmailData({ formularioNombre, bancoNombre, fechaLimite: fecha, reminderDays: days });
+    setModalPreviewEmail(true);
+  };
 
   const abrirModalAsignaciones = (formulario: Formulario) => {
     setFormularioSeleccionado(formulario);
@@ -474,31 +579,18 @@ const GestionFormularios: React.FC = () => {
                     {formulario.descripcion}
                   </Typography>
 
-                                     <Grid container spacing={2} sx={{ mb: 2 }}>
-                     <Grid item xs={6}>
-                       <Typography variant="body2" color="textSecondary">
-                         <strong>Creado:</strong> {formulario.fechaCreacion}
-                       </Typography>
-                     </Grid>
-                     <Grid item xs={6}>
-                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                         <Typography variant="body2" color="textSecondary">
-                           <strong>Límite:</strong>
-                         </Typography>
-                         <TextField
-                           type="date"
-                           size="small"
-                           value={formulario.fechaLimite}
-                           onChange={(e) => {
-                             setFormularios(prev => prev.map(f => 
-                               f.id === formulario.id ? { ...f, fechaLimite: e.target.value } : f
-                             ));
-                           }}
-                           sx={{ width: '140px' }}
-                         />
-                       </Box>
-                     </Grid>
-                   </Grid>
+                  <Grid container spacing={2} sx={{ mb: 2 }}>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="textSecondary">
+                        <strong>Creado:</strong> {formulario.fechaCreacion}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="textSecondary">
+                        <strong>Límite:</strong> {formulario.fechaLimite}
+                      </Typography>
+                    </Grid>
+                  </Grid>
 
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="body2" color="textSecondary">
@@ -647,6 +739,27 @@ const GestionFormularios: React.FC = () => {
                     Los bancos con formularios incompletos no podrán editar hasta completar la primera versión.
                   </Typography>
                 </Alert>
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Fecha límite por defecto del formulario
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <TextField
+                      type="date"
+                      size="small"
+                      value={formularioSeleccionado.fechaLimite}
+                      onChange={(e) => {
+                        const nueva = e.target.value;
+                        setFormularioSeleccionado(prev => prev ? { ...prev, fechaLimite: nueva } : prev);
+                        setFormularios(prev => prev.map(f => f.id === formularioSeleccionado.id ? { ...f, fechaLimite: nueva } : f));
+                      }}
+                      sx={{ width: '160px' }}
+                    />
+                    <Button variant="outlined" size="small" onClick={handleApplyDefaultDeadlineToAll}>
+                      Aplicar a todos
+                    </Button>
+                  </Box>
+                </Box>
                 
                 <Typography variant="h6" gutterBottom>
                   Asignaciones y Permisos por Banco
@@ -663,7 +776,7 @@ const GestionFormularios: React.FC = () => {
                           backgroundColor: isCompleted ? '#f8f9fa' : '#fff'
                         }}>
                           <Grid container spacing={2} alignItems="center">
-                            <Grid item xs={4}>
+                            <Grid item xs={3}>
                               <Typography variant="body1" fontWeight="medium">
                                 {asignacion.bancoNombre}
                               </Typography>
@@ -671,7 +784,7 @@ const GestionFormularios: React.FC = () => {
                                 {isCompleted ? 'Formulario completado' : 'Formulario pendiente'}
                               </Typography>
                             </Grid>
-                            <Grid item xs={3}>
+                            <Grid item xs={2}>
                               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <Typography variant="caption" color="textSecondary">
                                   Asignado
@@ -684,28 +797,74 @@ const GestionFormularios: React.FC = () => {
                                 />
                               </Box>
                             </Grid>
-                            <Grid item xs={5}>
-                              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <Typography variant="caption" color="textSecondary">
-                                  Permitir Editar
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Switch
-                                    checked={asignacion.editableByBanco}
-                                    onChange={() => handleToggleEditableByBanco(formularioSeleccionado.id, asignacion.bancoId)}
-                                    color="warning"
+                            <Grid item xs={12} md={7}>
+                              <Grid container spacing={2} alignItems="center">
+                                <Grid item xs={6} md={3}>
+                                  <Typography variant="caption" color="textSecondary" display="block">
+                                    Permitir editar
+                                  </Typography>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Switch
+                                      checked={asignacion.editableByBanco}
+                                      onChange={() => handleToggleEditableByBanco(formularioSeleccionado.id, asignacion.bancoId)}
+                                      color="warning"
+                                      size="small"
+                                      disabled={!isCompleted || !asignacion.activo}
+                                    />
+                                    {!isCompleted && (
+                                      <Tooltip title="El banco debe completar el formulario primero">
+                                        <Typography variant="caption" color="textSecondary">
+                                          (Requiere completar)
+                                        </Typography>
+                                      </Tooltip>
+                                    )}
+                                  </Box>
+                                </Grid>
+                                <Grid item xs={6} md={3}>
+                                  <Typography variant="caption" color="textSecondary" display="block">
+                                    Fecha límite
+                                  </Typography>
+                                  <TextField
+                                    type="date"
                                     size="small"
-                                    disabled={!isCompleted || !asignacion.activo}
+                                    value={asignacion.fechaLimite || formularioSeleccionado.fechaLimite}
+                                    onChange={(e) => handleChangeAsignacionDeadline(formularioSeleccionado.id, asignacion.bancoId, e.target.value)}
+                                    fullWidth
+                                    disabled={!asignacion.activo}
                                   />
-                                  {!isCompleted && (
-                                    <Tooltip title="El banco debe completar el formulario primero">
-                                      <Typography variant="caption" color="textSecondary">
-                                        (Requiere completar)
-                                      </Typography>
-                                    </Tooltip>
-                                  )}
-                                </Box>
-                              </Box>
+                                </Grid>
+                                <Grid item xs={6} md={3}>
+                                  <Typography variant="caption" color="textSecondary" display="block">
+                                    Recordatorio
+                                  </Typography>
+                                  <FormControl size="small" fullWidth>
+                                    <Select
+                                      value={(asignacion.reminderDays ?? 5).toString()}
+                                      onChange={(e) => handleChangeReminderDays(formularioSeleccionado.id, asignacion.bancoId, parseInt(e.target.value as string, 10))}
+                                      disabled={!asignacion.activo}
+                                    >
+                                      <MenuItem value="3">3 días antes</MenuItem>
+                                      <MenuItem value="5">5 días antes</MenuItem>
+                                      <MenuItem value="7">7 días antes</MenuItem>
+                                    </Select>
+                                  </FormControl>
+                                </Grid>
+                                <Grid item xs={6} md={3}>
+                                  <Typography variant="caption" color="transparent" display="block">
+                                    Vista previa
+                                  </Typography>
+                                  <Tooltip title="Ver previsualización de correo de recordatorio">
+                                    <IconButton size="small" onClick={() => openPreviewEmail(
+                                      formularioSeleccionado.nombre,
+                                      asignacion.bancoNombre,
+                                      asignacion.fechaLimite || formularioSeleccionado.fechaLimite,
+                                      asignacion.reminderDays || 5
+                                    )}>
+                                      <DescriptionIcon fontSize="small" />
+                                    </IconButton>
+                                  </Tooltip>
+                                </Grid>
+                              </Grid>
                             </Grid>
                           </Grid>
                         </Box>
@@ -718,6 +877,45 @@ const GestionFormularios: React.FC = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setModalAsignaciones(false)}>Cerrar</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Modal Previsualización de Correo */}
+        <Dialog open={modalPreviewEmail} onClose={() => setModalPreviewEmail(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Previsualización de Correo de Recordatorio</DialogTitle>
+          <DialogContent>
+            {previewEmailData && (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Para: {previewEmailData.bancoNombre}
+                </Typography>
+                <Typography variant="subtitle2" gutterBottom>
+                  Asunto: Recordatorio: Próxima fecha límite para completar "{previewEmailData.formularioNombre}"
+                </Typography>
+                <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1, backgroundColor: '#fafafa' }}>
+                  <Typography variant="body2" paragraph>
+                    Estimado equipo de {previewEmailData.bancoNombre},
+                  </Typography>
+                  <Typography variant="body2" paragraph>
+                    Les recordamos que la fecha límite para completar el formulario "{previewEmailData.formularioNombre}" es el día {previewEmailData.fechaLimite}.
+                  </Typography>
+                  <Typography variant="body2" paragraph>
+                    De acuerdo con la configuración, este recordatorio se envía {previewEmailData.reminderDays} días antes del vencimiento. Les solicitamos revisar el estado y completar la información pendiente a la brevedad.
+                  </Typography>
+                  <Typography variant="body2" paragraph>
+                    Ante cualquier duda, por favor contáctenos.
+                  </Typography>
+                  <Typography variant="body2">
+                    Saludos cordiales,
+                    <br />
+                    Equipo de Inquest
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setModalPreviewEmail(false)}>Cerrar</Button>
           </DialogActions>
         </Dialog>
 
